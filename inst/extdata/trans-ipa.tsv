@@ -1,0 +1,87 @@
+# vim: set shiftwidth=14 tabstop=14:
+
+# alveo	= alveolar
+# apic	= apical
+# blab	= bilabial
+# centr	= central
+# clmid	= close-mid
+# cons	= consonant
+# dlab	= dento-labial
+# dors	= dorsal
+# lamin	= laminal
+# laryn	= laryngeal
+# lat	= lateral
+# nopen	= near-open
+# nrnd	= not round
+# opmid	= open-mid
+# sibil	= sibilant
+# spir	= spirant
+# svow	= semi-vowel
+# vd	= voiced
+# vl	= voiceless
+# vow	= vowel
+
+GRAPHEME	VALUE
+m	cons,nasal,blab,vl
+p	cons,stop,blab,vl
+b	cons,stop,blab,vd
+φ	cons,spir,blab,vl
+β	cons,spir,blab,vd
+f	cons,spir,dlab,vl
+v	cons,spir,dlab,vd
+n	cons,nasal,apic,vd
+t	cons,stop,apic,vl
+d	cons,stop,apic,vd
+s	cons,sibil,apic,vl
+z	cons,sibil,apic,vd
+θ	cons,spir,apic,vl
+ð	cons,spir,apic,vd
+l	cons,lat,apic,vl
+ʃ	cons,sibil,lamin,vl
+ʒ	cons,sibil,lamin,vd
+r	cons,trill,alveo,vd
+k	cons,stop,dors,vl
+g	cons,stop,dors,vd
+χ	cons,spir,dors,vl
+ɣ	cons,spir,dors,vd
+h	cons,spir,laryn,vl
+ɦ	cons,spir,laryn,vd
+
+j	svow,front,nrnd
+w	svow,back,round
+
+i	vow,close,front,nrnd
+y	vow,close,front,round
+ɨ	vow,close,centr,nrnd
+ʉ	vow,close,centr,round
+ɯ	vow,close,back,nrnd
+u	vow,close,back,round
+e	vow,clmid,front,nrnd
+ø	vow,clmid,front,round
+ɘ	vow,clmid,centr,nrnd
+ɵ	vow,clmid,centr,round
+ɤ	vow,clmid,back,nrnd
+o	vow,clmid,back,round
+ə	vow,mid,centr,nrnd
+ɛ	vow,opmid,front,nrnd
+œ	vow,opmid,front,round
+ɜ	vow,opmid,centr,nrnd
+ɞ	vow,opmid,centr,round
+ʌ	vow,opmid,back,nrnd
+ɔ	vow,opmid,back,round
+æ	vow,nopen,front,nrnd
+ɐ	vow,nopen,centr,nrnd
+a	vow,open,front,nrnd
+ɶ	vow,open,front,round
+ä	vow,open,centr,nrnd
+ɑ	vow,open,back,nrnd
+ɒ	vow,open,back,round
+
+C	cons
+V	vow
+P	cons,stop
+S	cons,sibil
+L	cons,lat
+R	cons,trill
+A	vow,open
+U	vow,round

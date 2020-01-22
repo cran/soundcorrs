@@ -1,0 +1,123 @@
+# vim: set shiftwidth=14 tabstop=14 foldmarker=<<<,>>> nowrap:
+
+# - abbreviations ---------------------------------------------------------------------------------- <<< -
+
+# affr	= affricate
+# alveo	= alveolar
+# apic	= apical
+# blab	= bilabial
+# cons	= consonant
+# dlab	= dentolabial
+# dors	= dorsal
+# hv	= half-voiced
+# lamin	= laminal
+# laryn	= laryngeal
+# lat	= lateral
+# nrnd	= not round
+# palat	= palatal
+# red	= reduced
+# sibil	= sibilant
+# spir	= spirant
+# svow	= semi-vowel
+# vd	= voiced
+# vl	= voiceless
+# vow	= vowel
+
+# -------------------------------------------------------------------------------------------------- >>> -
+
+GRAPHEME	VALUE	META
+
+# - consonants ------------------------------------------------------------------------------------- <<< -
+
+ᴍ	cons,nasal,blab,vl	ᴍ
+m	cons,nasal,blab,vd	m
+p	cons,stop,blab,vl	p
+ʙ	cons,stop,blab,hv	ʙ
+b	cons,stop,blab,vd	b
+φ	cons,spir,blab,vl	φ
+β	cons,spir,blab,vd	β
+f	cons,spir,dlab,vl	f
+v	cons,spir,dlab,vd	v
+n	cons,nasal,apic,vd	n
+ɴ	cons,nasal,apic,vl	ɴ
+t	cons,stop,apic,vl	t
+ᴅ	cons,stop,apic,hv	ᴅ
+d	cons,stop,apic,vd	d
+c	cons,affr,apic,vl	c
+ʒ	cons,affr,apic,vd	ʒ
+s	cons,sibil,apic,vl	s
+ᴢ	cons,sibil,apic,hv	ᴢ
+z	cons,sibil,apic,vd	z
+θ	cons,spir,apic,vl	θ
+δ	cons,spir,apic,vd	δ
+l	cons,lat,apic,vl	l
+ʟ	cons,lat,apic,hv	ʟ
+ĺ	cons,lat,palat,vd	ĺ
+č	cons,affr,lamin,vl	č
+ǯ	cons,affr,lamin,vd	ǯ
+š	cons,sibil,lamin,vl	š
+ž	cons,sibil,lamin,vd	ž
+ś	cons,sibil,palat,vl	ś
+ź	cons,sibil,palat,vd	ź
+ć	cons,affr,palat,vl	ć
+r	cons,trill,alveo,vd	r
+ʀ	cons,trill,alveo,hv	ʀ
+ɹ	cons,flap,alve,vd	ɹ
+ŋ	cons,nasal,dors,vd	ŋ
+k	cons,stop,dors,vl	k
+ɢ	cons,stop,dors,hv	ɢ
+g	cons,stop,dors,vd	g
+χ	cons,spir,dors,vl	χ
+γ	cons,spir,dors,vd	γ
+h	cons,spir,laryn,vl	h
+ɦ	cons,spir,laryn,vd	ɦ
+
+# -------------------------------------------------------------------------------------------------- >>> -
+# - semi-vowels ------------------------------------------------------------------------------------ <<< -
+
+j	svow,front,nrnd	j
+w	svow,back,round	w
+ẅ	svow,front,round	ẅ
+
+# -------------------------------------------------------------------------------------------------- >>> -
+# - vowels ----------------------------------------------------------------------------------------- <<< -
+
+i	vow,high,front,nrnd,short	i
+ü	vow,high,front,round,short	ü
+e	vow,mid,front,nrnd,short	e
+ö	vow,mid,front,round,short	ö
+ä	vow,low,front,nrnd,short	ä
+y	vow,high,back,nrnd,short	y
+u	vow,high,back,round,short	u
+ẹ	vow,mid,back,nrnd,short	ẹ
+o	vow,mid,back,round,short	o
+a	vow,low,back,nrnd,short	a
+α	vow,low,back,round,short	α
+ī	vow,high,front,nrnd,long	ī
+ǖ	vow,high,front,round,long	ǖ
+ē	vow,mid,front,nrnd,long	ē
+ȫ	vow,mid,front,round,long	ȫ
+ǟ	vow,low,front,nrnd,long	ǟ
+ȳ	vow,high,back,nrnd,long	ȳ
+ū	vow,high,back,round,long	ū
+ō	vow,mid,back,round,long	ō
+ā	vow,low,back,nrnd,long	ā
+ᾱ	vow,low,back,round,long	ᾱ
+ə	vow,mid,front,nrnd,red	ə
+
+# -------------------------------------------------------------------------------------------------- >>> -
+# - metacharacters --------------------------------------------------------------------------------- <<< -
+
+C	cons	(ᴍ|m|p|ʙ|b|φ|β|f|v|n|ɴ|t|ᴅ|d|c|ʒ|s|ᴢ|z|θ|δ|l|ʟ|č|ǯ|š|ž|ś|ź|ć|r|ʀ|ŋ|k|ɢ|g|χ|γ|h|ɦ)
+x	cons	(ᴍ|m|p|ʙ|b|φ|β|f|v|n|ɴ|t|ᴅ|d|c|ʒ|s|ᴢ|z|θ|δ|l|ʟ|č|ǯ|š|ž|ś|ź|ć|r|ʀ|ŋ|k|ɢ|g|χ|γ|h|ɦ)
+N	cons,nasal	(ᴍ|m|n|ɴ|ŋ)
+P	cons,stop	(p|ʙ|b|t|ᴅ|d|k|ɢ|g)
+S	cons,sibil	(s|ᴢ|z|š|ž|ś|ź)
+H	cons,spir	(φ|β|f|v|θ|δ|χ|γ|h|ɦ)
+V	vow	(i|ü|e|ö|ä|y|u|ẹ|o|a|α|ī|ǖ|ē|ȫ|ǟ|ȳ|ū|ō|ā|ᾱ|ə)
+ɜ	vow	(i|ü|e|ö|ä|y|u|ẹ|o|a|α|ī|ǖ|ē|ȫ|ǟ|ȳ|ū|ō|ā|ᾱ|ə)
+ʌ	vow	(i|ü|e|ö|ä|y|u|ẹ|o|a|α|ī|ǖ|ē|ȫ|ǟ|ȳ|ū|ō|ā|ᾱ|ə)
+O	vow,round	(o|u|ö|ü|ō|ū|ǖ|ȫ|α|ᾱ)
+-	NULL	-
+
+# -------------------------------------------------------------------------------------------------- >>> -

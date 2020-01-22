@@ -1,0 +1,31 @@
+# vim: set shiftwidth=12 tabstop=12 foldmarker=<<<,>>>:
+
+ID	LANGUAGE	DIALECT	ALIGNED	ORTHOGRAPHY
+
+# - L1 literary standard : L2 literary standard ---------------------------------------------------- <<< -
+
+1	L1	std	a|b|c	abc
+1	L2	std	a|b|c	abc
+
+2	L1	std	a|b|a|c	abac
+2	L2	std	a|b|a|c	abac
+
+# -------------------------------------------------------------------------------------------------- >>> -
+# - L1 literary standard : L2 northern dialect ----------------------------------------------------- <<< -
+
+3	L1	std	a|b|c	abc
+3	L2	north	o|b|c	åbc
+
+4	L1	std	a|b|a|c	abac
+4	L2	north	u|w|u|c	uwuc
+
+# -------------------------------------------------------------------------------------------------- >>> -
+# - L1 literary standard : L2 southern dialect ----------------------------------------------------- <<< -
+
+5	L1	std	a|b|c|-	abc
+5	L2	south	a|b|c|ə	abca
+
+6	L1	std	a|b|a|c|-	abac
+6	L2	south	a|b|a|c|ə	abaca
+
+# -------------------------------------------------------------------------------------------------- >>> -
