@@ -948,10 +948,21 @@ scOne <- function (data, name, col.aligned, transcription, separator="\\|") {
 	# explode into segments
 	tmp <- as.vector (data[,col.aligned])
 	segms.z <- strsplit (tmp, separator)
-	tmp <- gsub (transcription$zero, "", tmp)
-	tmp <- gsub (paste0(separator,"+"), separator, tmp)		# rm multiple separators
-	tmp <- gsub (paste0("^",separator), "", tmp)			# rm separators from beginning, cause strsplit doesn't
-	segms.nz <- strsplit (tmp, separator)
+	if (!is.na(transcription$zero)) {
+		tmp <- gsub (transcription$zero, "", tmp)
+		tmp <- gsub (paste0(separator,"+"), separator, tmp)		# rm multiple separators
+		tmp <- gsub (paste0("^",separator), "", tmp)			# rm separators from beginning, cause strsplit doesn't
+		segms.nz <- strsplit (tmp, separator)
+	} else {
+		segms.nz <- segms.z
+	}
+
+	# check zeros always separate segments
+	if (!is.na(transcription$zero)) {
+		tmp.err <- Filter (function(x) nchar(x)>1 && grep(transcription$zero,x), unlist(segms.z))
+		if (length(tmp.err) > 0)
+			stop ("Linguistic zeros must be separate segments: ", collapse(tmp.err,inter=", "), ".")
+	}
 
 	# warn if the transcription doesn't cover everything
 	tmp.used <- unique (unlist (segms.z))
@@ -986,8 +997,12 @@ scOne <- function (data, name, col.aligned, transcription, separator="\\|") {
 	# generate a lookup table for segments after separators and zeros are removed
 	segpos.z <- lapply (segms.z, function (i)
 		unlist (mapply (rep, 1:length(i), nchar(i), SIMPLIFY=F)))
-	segpos.nz <- lapply (segms.nz, function (i)
-		unlist (mapply (rep, 1:length(i), nchar(i), SIMPLIFY=F)))
+	if (!is.na(transcription$zero))
+		segpos.nz <- mapply (function (p, m)
+				p [p %nin% grep(transcription$zero, m)]
+			, segpos.z, segms.z, SIMPLIFY=F)
+	else
+		segpos.nz <- segpos.z
 
 	# wrap in an object
 	res <- list (
@@ -2089,7 +2104,12 @@ transcription <- function (data, col.grapheme="GRAPHEME", col.meta="META", col.v
 
 	# find symbol(s) for linguistic zero
 	tmp <- data [data[,col.value]=="NULL" & !is.na(data[,col.value]), col.grapheme]
-	zero <- paste0 ("(", collapse(tmp,inter="|"), ")")
+	if (identical(tmp,character(0))) {
+		zero <- NA
+		warning ("Linguistic zero is not defined in the transcription.")
+	} else {
+		zero <- paste0 ("(", collapse(tmp,inter="|"), ")")
+	}
 
 	# create an object
 	res <- list (

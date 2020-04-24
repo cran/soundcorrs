@@ -1,0 +1,20 @@
+soundcorrs 0.1.1 (2020-04-24)
+=============================
+
+Fixes
+* findPairs() with exact=F could not find matching segments if one of them
+	was preceded by more than two linguistic zeros (e.g. "-|-|b" : "a|a|b"
+	would fail for c("b","b")).
+* Minor corrections to the vignette.
+
+Additions
+* A check that linguistic zeros are defined in the transcription.
+* A check that linguistic zeros are separate segments.
+* Linguistic zero to the trans-ipa.tsv sample transcription.
+
+
+
+soundcorrs 0.1.0 (2020-01-11)
+=============================
+
+* Initial version.

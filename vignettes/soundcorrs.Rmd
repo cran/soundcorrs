@@ -27,13 +27,13 @@ A less technical introduction to ‘soundcorrs’ is also available in Stachowsk
 
 The first section of this vignette discusses in short how to prepare data for ‘soundcorrs’. The second section is an overview of all the analytic functions exported by ‘soundcorrs’ organized by their output, and of helper functions in the alphabetical order.
 
-As of version 1.0, most ‘soundcorrs’ functions operate on pairs of words, coming from two different languages. (Technically, “language” can of course be anything, so long as it clearly determines which word is the first in the pair, and which one the second.) The discussion below will use ‘L1’ to refer to the first language, and ‘L2’ to refer to the second.
+As of version 0.1.1, most ‘soundcorrs’ functions operate on pairs of words, coming from two different languages. (Technically, “language” can of course be anything, so long as it clearly determines which word is the first in the pair, and which one the second.) The discussion below will use ‘L1’ to refer to the first language, and ‘L2’ to refer to the second.
 
 Naturally, all the examples given below assume that ‘soundcorrs’ is installed and loaded:
 
 ```{r}
 # install.packages ("soundcorrs")
-library ("soundcorrs")
+library (soundcorrs)
 ```
 
 

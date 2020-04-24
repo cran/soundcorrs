@@ -6,7 +6,7 @@ knitr::opts_chunk$set(
 
 ## -----------------------------------------------------------------------------
 # install.packages ("soundcorrs")
-library ("soundcorrs")
+library (soundcorrs)
 
 ## -----------------------------------------------------------------------------
 # establish the paths of the samples included in ‘soundcorrs’

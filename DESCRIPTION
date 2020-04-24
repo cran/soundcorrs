@@ -1,6 +1,6 @@
 Package: soundcorrs
 Title: Semi-Automatic Analysis of Sound Correspondences
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: person("Kamil", "Stachowski", email = "kamil.stachowski@gmail.com", role = c("aut","cre"))
 Description: A set of tools that can be used in computer-aided analysis of
     sound correspondences between languages, plus several helper functions.
@@ -15,8 +15,8 @@ RoxygenNote: 7.0.2
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2020-01-15 13:40:42 UTC; kamil
+Packaged: 2020-04-24 06:04:17 UTC; kamil
 Author: Kamil Stachowski [aut, cre]
 Maintainer: Kamil Stachowski <kamil.stachowski@gmail.com>
 Repository: CRAN
-Date/Publication: 2020-01-22 15:20:02 UTC
+Date/Publication: 2020-04-24 06:30:02 UTC
