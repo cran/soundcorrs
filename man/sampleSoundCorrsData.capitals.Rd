@@ -4,7 +4,9 @@
 \name{sampleSoundCorrsData.capitals}
 \alias{sampleSoundCorrsData.capitals}
 \title{A sample dataset with the names of EU capitals in German, Polish, and Spanish.}
-\format{A \code{\link{soundcorrs}} object.}
+\format{
+A \code{\link{soundcorrs}} object.
+}
 \usage{
 sampleSoundCorrsData.capitals
 }

@@ -4,21 +4,19 @@
 \alias{summary.soundcorrs}
 \title{Generate a segment-to-segment contingency table for two languages.}
 \usage{
-\method{summary}{soundcorrs}(object, count = "a", unit = "w", direction = 1, ...)
+\method{summary}{soundcorrs}(object, count = "a", unit = "w", ...)
 }
 \arguments{
 \item{object}{[soundcorrs] The dataset from which to draw frequencies. Only datasets with two languages are supported.}
 
-\item{count}{[character] Report the absolute number of times or words, or relative to how many times or in how many words the given segments co-occur in L1 or L2. Accepted values are \code{"a(bs(olute))"} and \code{"r(el(ative))"}. Defaults to "a".}
+\item{count}{[character] Report either the absolute number of times or words, or relative to how many times or in how many words the given segments correspond to each other. Accepted values are \code{"a(bs(olute))"} and \code{"r(el(ative))"}. Defaults to "a".}
 
 \item{unit}{[character] Count how many times a correspondence occurs or in how many words it occurs. Accepted values are \code{"o(cc(ur(ence(s))))"} and \code{"w(or(d(s)))"}. Defaults to \code{"w"}.}
-
-\item{direction}{[integer] If \code{1}, correspondences are in the order Language1 > Language2 ("x yields y"). If \code{2}, the order is Language2 < Language1 ("y originates from x"). Defaults to \code{1}.}
 
 \item{...}{Unused; only for consistency with \code{\link{print}}.}
 }
 \value{
-[table] The contingency table.
+[table] The contingency table. The values represent how often the given segments correspond to each other, not how often they co-occur in the same word (cf. \code{\link{coocc}}).
 }
 \description{
 Produce a contingency table detailing all segment-to-segment correspondences in a dataset.
@@ -28,5 +26,7 @@ dataset <- sampleSoundCorrsData.abc
 summary (dataset)
 round (summary(dataset,count="r"), digits=3)
 summary (dataset, unit="o")
-summary (dataset, direction=2)
+}
+\seealso{
+\code{\link{coocc}}.
 }

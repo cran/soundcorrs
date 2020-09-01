@@ -19,6 +19,6 @@ Cross-tabulating sound correspondences with themselves may be misleading if the 
 }
 \examples{
 dataset <- sampleSoundCorrsData.abc
-soundcorrs:::tabAbs2Rel (table(dataset,unit="o",direction=2), NULL)
+soundcorrs:::tabAbs2Rel (coocc(dataset,unit="o"), NULL)
 }
 \keyword{internal}

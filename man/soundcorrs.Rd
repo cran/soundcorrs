@@ -4,44 +4,55 @@
 \alias{soundcorrs}
 \title{Constructor function for the \code{soundcorrs} class.}
 \usage{
-soundcorrs(...)
+soundcorrs(data, name, col.aligned, transcription, separator = "\\\\|")
 }
 \arguments{
-\item{...}{[scOne] Multiple \code{\link{scOne}} objects to be combined.}
+\item{data}{[data.frame] Data for one language.}
+
+\item{name}{[character] Name of the language.}
+
+\item{col.aligned}{[character] Name of the column with the aligned words.}
+
+\item{transcription}{[transcription] The \code{\link{transcription}} for the given language.}
+
+\item{separator}{[character] String used to separate segments in \code{col.aligned}. Defaults to \code{"\\|"}.}
 }
 \value{
-[soundcorrs] An object containing the data and metadata for multiple language.
+[soundcorrs] An object containing the data and metadata for one language.
 }
 \description{
-Take multiple \code{\link{scOne}} objects and combine them into a single \code{soundcorrs} object.
+Take a data frame and turn it into a \code{soundcorrs} object containing data for one language. To obtain a \code{soundcorrs} object containing data for multiple languages, see \code{\link{merge.soundcorrs}}. In the normal workflow, the user should have no need to call this constructor other than through \code{\link{read.soundcorrs}}.
 }
 \section{Fields}{
 
 \describe{
 \item{\code{cols}}{[character list] Names of important columns.}
 
-\item{\code{data}}{[data.frame] The original data, merged.}
+\item{\code{data}}{[data.frame] The original data.}
 
-\item{\code{name}}{[character] Names of the languages.}
+\item{\code{names}}{[character] Name of the language.}
 
 \item{\code{segms}}{[character list] Words exploded into segments. With linguistic zeros preserved (\code{$z}) or removed (\code{$nz}).}
 
 \item{\code{segpos}}{[integer list] A lookup list to check which character belongs to which segment. Counted with linguistic zeros preserved (\code{$z}) and removed (\code{$nz}).}
 
-\item{\code{separators}}{[character] Strings used as segment separators in \code{cols$aligned}.}
+\item{\code{separators}}{[character] The strings used as segment separator in \code{cols$aligned}.}
 
-\item{\code{trans}}{[transcription] \code{\link{transcription}} objects.}
+\item{\code{trans}}{[transcription] The transcription.}
 
 \item{\code{words}}{[character list] Words obtained by removing separators from the \code{cols$aligned} columns. With linguistic zeros (\code{$z}) or without them (\code{$nz}).}
 }}
 
 \examples{
-# path to sample data in the "wide format"
+# read sample data in the "wide format"
 fNameData <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
-# path to a sample transcription
+readData <- read.table (fNameData, header=TRUE)
+# read the sample transcription
 fNameTrans <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
-ger <- read.scOne (fNameData, "German", "ALIGNED.German", fNameTrans)
-pol <- read.scOne (fNameData, "Polish", "ALIGNED.Polish", fNameTrans)
-spa <- read.scOne (fNameData, "Spanish", "ALIGNED.Spanish", fNameTrans)
-dataset <- soundcorrs (ger, pol, spa)
+readTrans <- read.transcription (fNameTrans)
+# make out of them a soundcorrs object
+ger <- soundcorrs (readData, "German", "ALIGNED.German", readTrans)
+pol <- soundcorrs (readData, "Polish", "ALIGNED.Polish", readTrans)
+spa <- soundcorrs (readData, "Spanish", "ALIGNED.Spanish", readTrans)
+dataset <- merge (ger, pol, spa)
 }

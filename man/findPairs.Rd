@@ -2,7 +2,7 @@
 % Please edit documentation in R/soundcorrs.R
 \name{findPairs}
 \alias{findPairs}
-\title{Find all pairs with corresponding sequences of sounds.}
+\title{A convenience wrapper around \code{\link{findExamples}}.}
 \usage{
 findPairs(data, x, y, exact, cols)
 }
@@ -13,23 +13,21 @@ findPairs(data, x, y, exact, cols)
 
 \item{y}{[character] The sequence to find in language2. May be a regular expression. If an empty string, anything will be considered a match.}
 
-\item{exact}{[logical] Only return exact, full-segment to full-segment matches? If \code{TRUE}, linguistic zeros are not ignored. Defaults to \code{FALSE}.}
+\item{exact}{[numeric] If 0 or \code{FALSE}, \code{distance.start}=\code{distance.end}=-1, \code{na.value}=0, and \code{zeros}=\code{FALSE}. If 0.5, \code{distance.start}=\code{distance.end}=1, \code{na.value}=0, and \code{zeros}=\code{FALSE}. If 1 or \code{TRUE}, \code{distance.start}=\code{distance.end}=0, \code{na.value}=-1, and \code{zeros}=\code{TRUE}. Defaults to 0.}
 
 \item{cols}{[character vector] Which columns of the dataset to return as the result. Can be a vector of names, \code{"aligned"} (the two columns with segmented, aligned words), or \code{"all"} (all columns). Defaults to \code{"aligned"}.}
 }
 \value{
-[df.findPairs] A subset of the dataset, containing only the pairs with corresponding sequences. Warning: pairs with multiple occurrences of such sequences are only included once.
+[df.findExamples] A subset of the dataset, containing only the pairs with corresponding sequences. Warning: pairs with multiple occurrences of such sequences are only included once.
 }
 \description{
 Sift the dataset for word pairs such that the first word contains \code{x} and the second word contains \code{y} in the corresponding segment or segments.
 }
 \examples{
 # In the examples below, non-ASCII characters had to be escaped for technical reasons.
-# In actual usage, all soundcorrs functions accept characters from beyond ASCII.
+# In the actual usage, Unicode is supported under BSD, Linux, and macOS.
 dataset <- sampleSoundCorrsData.capitals
-findPairs (dataset, "\u00E4", "e", cols=c("ORTHOGRAPHY.German","ORTHOGRAPHY.Polish"))  # a-diaeresis
-findPairs (dataset, "a", "[ae]", cols="all")
-findPairs (dataset, "\u0259", "Vr", exact=FALSE)  # schwa
-findPairs (dataset, "\u0259", "Vr", exact=TRUE)  # schwa
-subset (dataset, findPairs(dataset, "\u00E4", "e")$which)  # a-diaeresis
+}
+\seealso{
+\code{\link{findExamples}}, \code{\link{allPairs}}.
 }

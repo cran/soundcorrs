@@ -20,6 +20,6 @@ formatter.none(what, x, direction = 1)
 A formatter for \code{\link{allPairs}}. This one does practically no formatting at all.
 }
 \examples{
-dataset <- sampleSoundCorrsData.capitals
+dataset <- sampleSoundCorrsData.abc
 allPairs (dataset, unit="o", formatter=formatter.none)
 }

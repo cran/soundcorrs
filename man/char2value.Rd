@@ -2,25 +2,13 @@
 % Please edit documentation in R/soundcorrs.R
 \name{char2value}
 \alias{char2value}
-\title{Convert characters to their values.}
+\title{Information that the \code{char2value()} function is obsolete.}
 \usage{
-char2value(data, language, x)
+char2value(...)
 }
 \arguments{
-\item{data}{[soundcorrs] The \code{\link{soundcorrs}} object which holds the \code{\link{transcription}}.}
-
-\item{language}{[character or integer] Which \code{\link{transcription}} to use; can be the name of the language, or its number (in which place it was listed when creating the \code{\link{soundcorrs}} object.}
-
-\item{x}{[character vector] Characters to convert.}
-}
-\value{
-[character vector] Values, as defined in the \code{\link{transcription}}.
+\item{...}{Ignored, only for compatibility.}
 }
 \description{
-Convert a vector of characters to their values, as defined in the \code{\link{transcription}}.
-}
-\examples{
-dataset <- sampleSoundCorrsData.abc
-segms <- findSegments (dataset, "a", "o", +1)
-char2value (dataset, "L1", segms$L1)
+Since version 0.2.0 it is no longer available. If you need its functionality, please contact kamil.stachowski@gmail.com
 }

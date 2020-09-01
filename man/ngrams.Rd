@@ -2,16 +2,18 @@
 % Please edit documentation in R/soundcorrs.R
 \name{ngrams}
 \alias{ngrams}
-\title{Frequencies of n-grams.}
+\title{N-grams and their frequencies.}
 \usage{
-ngrams(data, n, zeros, as.table)
+ngrams(x, n = 1, borders = c("", ""), rm = "", as.table = T)
 }
 \arguments{
-\item{data}{[scOne] A \code{\link{scOne}} object in which to look for n-grams.}
+\item{x}{[character vector] Words to be cut into n-grams.}
 
 \item{n}{[integer] The length of n-grams to look for. Defaults to \code{1}.}
 
-\item{zeros}{[logical] Include linguistic zeros? Defaults to \code{TRUE}.}
+\item{borders}{[character] Characters to prepend and append to every word. Must be a vector of exactly two character strings. Defaults to \code{c("","")}.}
+
+\item{rm}{[character] Characters to be removed from \code{x} before cutting into n-grams. May be a regular expression, f.ex. "[-\\|]" will capture the default symbol for linguistics zeros as well as the default segment separators. Empty string denotes nothing to replace. Defaults to empty string.}
 
 \item{as.table}{[logical] Return the result as a table? Defaults to \code{TRUE}.}
 }
@@ -19,14 +21,12 @@ ngrams(data, n, zeros, as.table)
 [table] Table with counts of n-grams.
 }
 \description{
-Find n-grams of specified length and return their counts.
+Find n-grams of specified length and return them as a list, or their counts as a table.
 }
 \examples{
-# path to sample data in the "wide format"
-fNameData <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
-# path to a sample transcription
-fNameTrans <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
-d.cap.ger <- read.scOne (fNameData, "German", "ALIGNED.German", fNameTrans)
-ngrams (d.cap.ger, 2)
-ngrams (d.cap.ger, 2, FALSE)
+dataset <- sampleSoundCorrsData.capitals
+ngrams(dataset$data[,"ALIGNED.German"], n=2)
+ngrams(dataset$data[,"ALIGNED.German"], n=3, as.table=FALSE)
+ngrams(dataset$data[,"ALIGNED.German"], n=4, rm="[-\\\\|]", as.table=FALSE)
+ngrams(dataset$data[,"ALIGNED.German"], n=5, borders=c(">","<"), rm="[-\\\\|]", as.table=FALSE)
 }

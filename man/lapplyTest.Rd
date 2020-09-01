@@ -21,6 +21,6 @@ Takes a list and applies to each of its elements a function, returning a list of
 }
 \examples{
 dataset <- sampleSoundCorrsData.abc
-lapplyTest (allTables(dataset))
-lapplyTest (allTables(dataset), fisher.test, simulate.p.value=TRUE)
+lapplyTest (allCooccs(dataset))
+lapplyTest (allCooccs(dataset), fisher.test, simulate.p.value=TRUE)
 }

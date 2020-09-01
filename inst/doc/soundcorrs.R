@@ -35,51 +35,34 @@ path.cap <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
 path.ie <- system.file ("extdata", "data-ie.tsv", package="soundcorrs")
 
 # read “capitals”
-d.cap.ger <- read.scOne (path.cap, "German", "ALIGNED.German", path.trans.com)
-d.cap.pol <- read.scOne (path.cap, "Polish", "ALIGNED.Polish", path.trans.com)
-d.cap <- soundcorrs (d.cap.ger, d.cap.pol)
+d.cap.ger <- read.soundcorrs (path.cap, "German", "ALIGNED.German", path.trans.com)
+d.cap.pol <- read.soundcorrs (path.cap, "Polish", "ALIGNED.Polish", path.trans.com)
+d.cap.spa <- read.soundcorrs (path.cap, "Spanish", "ALIGNED.Spanish", path.trans.com)
+d.cap <- merge (d.cap.ger, d.cap.pol, d.cap.spa)
 
 # read “ie”
-d.ie.lat <- read.scOne (path.ie, "Lat", "LATIN", path.trans.com)
-d.ie.eng <- read.scOne (path.ie, "Eng", "ENGLISH", path.trans.ipa)
-d.ie <- soundcorrs (d.ie.lat, d.ie.eng)
+d.ie.lat <- read.soundcorrs (path.ie, "Lat", "LATIN", path.trans.com)
+d.ie.eng <- read.soundcorrs (path.ie, "Eng", "ENGLISH", path.trans.ipa)
+d.ie <- merge (d.ie.lat, d.ie.eng)
 
 # read “abc”
 tmp <- long2wide (read.table(path.abc,header=T), skip=c("ID"))
-d.abc.l1 <- scOne (tmp, "L1", "ALIGNED.L1", trans.com)
-d.abc.l2 <- scOne (tmp, "L2", "ALIGNED.L2", trans.com)
-d.abc <- soundcorrs (d.abc.l1, d.abc.l2)
-
-# individual languages are objects of class ‘scOne’
-class (d.abc.l1)
+d.abc.l1 <- soundcorrs (tmp, "L1", "ALIGNED.L1", trans.com)
+d.abc.l2 <- soundcorrs (tmp, "L2", "ALIGNED.L2", trans.com)
+d.abc <- merge (d.abc.l1, d.abc.l2)
 
 # some basic summary
 d.abc.l1
-
-# ‘cols’ are names of the important columns
-# ‘data’ is the original data frame
-# ‘name’ is the name of the language
-# ‘segms’ are words exploded into segments; ‘$z’ is a variant with linguistic zeros; ‘$nz’ without them
-# ‘segpos’ is a lookup list to check which character belongs to which segment; ‘$z’ is a variant with linguistic zeros; ‘$nz’ without them
-# ‘separator’ is the string used as segment separator
-# ‘trans’ is a ‘transcription’ object
-# ‘words’ are words obtained by removing separators from the ‘col.aligned’ column; ‘$z’ is a variant with linguistic zeros; ‘$nz’ without them
-str (d.abc.l1, max.level=1)
-
-# datasets are objects of class ‘soundcorrs’
-class (d.abc)
-
-# some basic summary
 d.abc
 
+# ‘cols’ are the names of important columns
 # ‘data’ is the original data frame
-# ‘cols’ are the same as with ‘scOne’ above, wrapped in a list
-# ‘names’ are the names of the languages,
-# ‘segms’ are the same as with ‘scOne’ above, wrapped in a list
-# ‘segpos’ are likewise
-# ‘separators’ are likewise, only a vector instead of a list
-# ‘trans’ are the individual transcriptions wrapped in a list
-# ‘words’ are the same as with ‘scOne’ above, wrapped in a list
+# ‘names’ are the names of the languages
+# ‘segms’ are words exploded into segments; ‘$z’ is a variant with linguistic zeros; ‘$nz’ without them
+# ‘segpos’ is a lookup list to check which character belongs to which segment; ‘$z’ is a variant with linguistic zeros; ‘$nz’ without them
+# ‘separators’ are the strings used as segment separators
+# ‘trans’ are ‘transcription’ objects
+# ‘words’ are words obtained by removing separators from the ‘col.aligned’ column; ‘$z’ is a variant with linguistic zeros; ‘$nz’ without them
 str (d.abc, max.level=1)
 
 ## -----------------------------------------------------------------------------
@@ -98,17 +81,14 @@ apply (rels, 1, sum)
 
 ## -----------------------------------------------------------------------------
 # a general look in the internal mode
-table (d.abc)
-
-# … and in the other direction
-table (d.abc, direction=2)
+coocc (d.abc)
 
 # now with metadata
-table (d.abc, "DIALECT.L2")
+coocc (d.abc, "DIALECT.L2")
 
 # in the internal mode,
 #    the relative values are with regard to segment-to-segment blocks
-tab <- table (d.abc, count="r")
+tab <- coocc (d.abc, count="r")
 rows.a <- which (rownames(tab) %hasPrefix% "a")
 cols.b <- which (colnames(tab) %hasPrefix% "b")
 sum (tab [rows.a, cols.b])
@@ -118,26 +98,74 @@ sum (tab)
 
 # if two correspondences never co-occur, the relative value is 0/0
 #    which R represents as ‘NaN’, and prints as empty space
-table (d.abc, direction=2, count="r")
+coocc (d.abc, count="r")
 
 # in the external mode,
 #    the relative values are with regard to blocks of rows, and all columns
-tab <- table (d.abc, "DIALECT.L2", count="r")
+tab <- coocc (d.abc, "DIALECT.L2", count="r")
 rows.a <- which (rownames(tab) %hasPrefix% "a")
 sum (tab [rows.a, ])
 
 ## -----------------------------------------------------------------------------
 # for a small dataset, the result is going to be small
-str (allTables(d.abc), max.level=0)
+str (allCooccs(d.abc), max.level=0)
 
 # but it can grow quite quickly with a larger dataset
-str (allTables(d.cap), max.level=0)
+str (allCooccs(d.cap), max.level=0)
 
 # the naming scheme
-names (allTables(d.abc))
+names (allCooccs(d.abc))
 
 # and with ‘column’ not ‘NULL’
-names (allTables(d.abc,column="DIALECT.L2"))
+names (allCooccs(d.abc,column="DIALECT.L2"))
+
+## -----------------------------------------------------------------------------
+
+# “ab” spans segments 1–2, while “a” only occupies segment 1
+findExamples (d.abc, "ab", "a", distance.end=0)
+findExamples (d.abc, "ab", "a", distance.end=1)
+
+# linguistic zeros cannot be found if ‘zeros’ is set to ‘FALSE’
+findExamples (d.abc, "-", "", zeros=T)
+findExamples (d.abc, "-", "", zeros=F)
+
+# both the usual and custom regular expressions are permissible
+findExamples (d.abc, "a", "[ou]")
+findExamples (d.abc, "a", "O")
+
+# the output is actuall a list
+str (findExamples(d.abc,"a","a"), max.level=1)
+
+# ‘data’ is what is displayed on the screen
+# ‘which’ is useful for subsetting
+subset (d.abc, findExamples(d.abc,"a","O")$which)
+
+# ‘which’ can also be used to find examples
+#    that exhibit more than one correspondence.
+aaa <- findExamples (d.cap, "a", "a", "a", distance.start=0, distance.end=0)$which
+bbb <- findExamples (d.cap, "b", "b", "b", distance.start=0, distance.end=0)$which
+d.cap$data [aaa & bbb,]
+
+
+# the ‘cols’ argument can be used to alter the printed output
+findExamples (d.abc, "a", "O", cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
+
+## -----------------------------------------------------------------------------
+# and see what result this gives
+allPairs (d.abc, cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
+
+# a clearer result could be obtained by running
+# allPairs (d.cap, cols=c("ORTHOGRAPHY.German","ORTHOGRAPHY.Polish"),
+#    file="~/Desktop/d.cap.html", formatter=formatter.html)
+
+## -----------------------------------------------------------------------------
+# load the new formatter function …
+# source ("~/Desktop/myFormatter.R")
+
+# … and use it instead of ‘formatter.html()’
+# allPairs (d.cap, cols=c("ORTHOGRAPHY.German","ORTHOGRAPHY.Polish"),
+#    file="~/Desktop/d.cap.html", formatter=myFormatter)
+# note that this time the output will not open in the web browser automatically 
 
 ## -----------------------------------------------------------------------------
 # prepare some random data
@@ -158,7 +186,7 @@ summary (fit)
 
 ## -----------------------------------------------------------------------------
 # prepare the data
-dataset <- table (sampleSoundCorrsData.abc)
+dataset <- coocc (sampleSoundCorrsData.abc)
 
 # prepare the models to be tested
 models <- list (
@@ -173,98 +201,6 @@ fit <- fitTable (models, dataset, 1, vec2df.hist)
 summary (fit, metric="sigma")
 
 ## -----------------------------------------------------------------------------
-# with n==1, ngrams() returns simply the frequencies of segments
-ngrams (d.cap.ger)
-
-# counts can easily be turned into a data frame with ranks
-tab <- ngrams (d.cap.ger, 9, F)
-mtx <- as.matrix (sort(tab,decreasing=T))
-data.frame (RANK=1:length(mtx), COUNT=mtx, FREQ=mtx/sum(mtx))
-
-## -----------------------------------------------------------------------------
-# the difference between the two sifting modes
-
-#    “ab” spans segments 1–2, while “a” only occupies segment 1
-findPairs (d.abc, "ab", "a", exact=T)
-findPairs (d.abc, "ab", "a", exact=F)
-
-#    the exact mode ignores linguistic zeros
-findPairs (d.abc, "-", "", exact=T)
-findPairs (d.abc, "-", "", exact=F)
-
-# ‘findPairs()’ accepts the usual and the custom regular expressions
-findPairs (d.abc, "a", "o|u")
-findPairs (d.abc, "a", "O")
-
-# the output is actually a list
-str (findPairs(d.abc,"a","a"), max.level=1)
-
-# ‘data’ is what is displayed on the screen
-# ‘found’ is a data.frame with the exact positions
-# ‘which’ is useful for subsetting
-subset (d.abc, findPairs(d.abc,"a","O")$which)
-
-# the ‘cols’ argument can be used to alter the printed output
-findPairs (d.abc, "a", "O", cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
-
-## -----------------------------------------------------------------------------
-# and see what result this gives
-allPairs (d.abc, cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
-
-# a clearer result could be obtained by running
-# allPairs (d.cap, cols=c("ORTHOGRAPHY.German","ORTHOGRAPHY.Polish"),
-#    file="~/Desktop/d.cap.html", formatter=formatter.html)
-
-## -----------------------------------------------------------------------------
-# load the new formatter function …
-# source ("~/Desktop/myFormatter.R")
-
-# … and use it instead of ‘formatter.html()’
-# allPairs (d.cap, cols=c("ORTHOGRAPHY.German","ORTHOGRAPHY.Polish"),
-#    file="~/Desktop/d.cap.html", formatter=myFormatter)
-# note that this time the output will not open in the web browser automatically 
-
-## -----------------------------------------------------------------------------
-# in the ‘d.abc’ dataset, only one word exhibits L1 a : L2 o
-ao <- findPairs (d.abc, "a", "o")
-
-# it is the third one
-ao$which
-
-# and it has three segments, of which the first is the one we are looking for
-ao
-
-# hence
-findSegments (d.abc, "a", "o", segment=0)
-
-# and
-findSegments (d.abc, "a", "o", segment=2)
-
-# but
-findSegments (d.abc, "a", "o", segment=-1)
-
-# the output of ‘findSegments()’ can be turned into phonetic values
-segms <- findSegments (d.abc, "b", "b", segment=1)
-phon <- char2value (d.abc, "L1", segms$L1)
-phon
-
-# a table for manual inspection
-mapply (function(l,s) char2value(d.abc,l,s), d.abc$names, segms)
-
-# this result can then be further processed…
-phon <- unlist (lapply (phon, function(i) grepl("cons",i)))
-
-# … attached to a dataset
-d.abc.new <- cbind (d.abc, BEFORE.CONSONANT=phon)
-
-# … and analysed
-table (d.abc.new, "BEFORE.CONSONANT")
-
-# sadly, the procedure becomes more complicated if a correspondence
-#    occurs more than once in a single word
-findSegments (d.abc, "a", "a", segment=1)
-
-## -----------------------------------------------------------------------------
 # using the default ‘|’ …
 addSeparators (d.abc$data$ORTHOGRAPHY.L1)
 
@@ -273,7 +209,7 @@ addSeparators (d.abc$data$ORTHOGRAPHY.L1, ".")
 
 ## -----------------------------------------------------------------------------
 # build a table for a slightly larger dataset
-tab <- table (d.cap)
+tab <- coocc (d.cap)
 
 # let us focus on L1 a and o
 rows <- which (rownames(tab) %hasPrefix% "a")
@@ -299,7 +235,7 @@ orth [grep(query,orth)]
 
 ## -----------------------------------------------------------------------------
 # build a table for a slightly larger dataset
-tab <- table (d.cap)
+tab <- coocc (d.cap)
 
 # it is quite difficult to read as a whole, so let us focus
 #    on a-like vowels in L1 and s-like consonants in L2
@@ -309,7 +245,7 @@ tab [rows, cols]
 
 ## -----------------------------------------------------------------------------
 # build a table for a slightly larger dataset
-tab <- table (d.cap)
+tab <- coocc (d.cap)
 
 # it is quite difficult to read as a whole, so let us focus
 #    on what corresponds to a-like vowels in L1 and s-like consonants in L2
@@ -319,7 +255,7 @@ tab [rows, cols]
 
 ## -----------------------------------------------------------------------------
 # let us prepare the tables
-tabs <- allTables (d.abc, bin=F)
+tabs <- allCooccs (d.abc, bin=F)
 
 # and apply the chi-squared test to them
 chisq <- lapplyTest (tabs)
@@ -344,6 +280,15 @@ long2wide (abc.long)
 
 # but this can be avoided with the ‘skip’ argument
 abc.wide <- long2wide (abc.long, skip="ID")
+
+## -----------------------------------------------------------------------------
+# with n==1, ngrams() returns simply the frequencies of segments
+ngrams (d.cap$data[,"ORTHOGRAPHY.Spanish"])
+
+# counts can easily be turned into a data frame with ranks
+tab <- ngrams (d.cap$data[,"ORTHOGRAPHY.Spanish"], n=2)
+mtx <- as.matrix (sort(tab,decreasing=T))
+head (data.frame (RANK=1:length(mtx), COUNT=mtx, FREQ=mtx/sum(mtx)))
 
 ## -----------------------------------------------------------------------------
 # select only examples from L2’s northern dialect

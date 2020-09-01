@@ -2,30 +2,13 @@
 % Please edit documentation in R/soundcorrs.R
 \name{findSegments}
 \alias{findSegments}
-\title{Segments in relation to segments exhibiting a correspondence.}
+\title{Information that the \code{findSegments} function is obsolete.}
 \usage{
-findSegments(data, x, y, segment)
+findSegments(...)
 }
 \arguments{
-\item{data}{[soundcorrs] The dataset in which to look. Only datasets with two languages are supported.}
-
-\item{x}{[character] The sequence to find in language1. May be a regular expression. If an empty string, anything will be considered a match.}
-
-\item{y}{[character] The sequence to find in language2. May be a regular expression. If an empty string, anything will be considered a match.}
-
-\item{segment}{[integer] Number of the segment to be returned, in relation to segments containing \code{x} and \code{y}. Defaults to 0.}
-}
-\value{
-[list] Vectors for both languages, each of the same length as the dataset.
+\item{...}{Ignored, only for compatibility.}
 }
 \description{
-Find pairs with a specific sound correspondence, and extract from them the segments which come before or after the segments exhibiting that correspondence.
-}
-\examples{
-# In the examples below, non-ASCII characters had to be escaped for technical reasons.
-# In actual usage, all soundcorrs functions accept characters from beyond ASCII.
-dataset <- sampleSoundCorrsData.capitals
-findPairs (dataset, "\u00E4", "e")  # a-diaeresis
-findSegments (dataset, "\u00E4", "e")
-findSegments (dataset, "\u00E4", "e", -1)
+Since version 0.2.0 it is no longer available. If you need its functionality, please contact kamil.stachowski@gmail.com
 }

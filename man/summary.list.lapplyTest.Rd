@@ -21,5 +21,5 @@ Take the output of \code{\link{lapplyTest}}, and extract from it only the notewo
 }
 \examples{
 dataset <- sampleSoundCorrsData.abc
-lapplyTest (allTables(dataset))
+lapplyTest (allCooccs(dataset))
 }

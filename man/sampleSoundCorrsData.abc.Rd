@@ -4,7 +4,9 @@
 \name{sampleSoundCorrsData.abc}
 \alias{sampleSoundCorrsData.abc}
 \title{A sample dataset with entirely made up words and languages.}
-\format{A \code{\link{soundcorrs}} object.}
+\format{
+A \code{\link{soundcorrs}} object.
+}
 \usage{
 sampleSoundCorrsData.abc
 }

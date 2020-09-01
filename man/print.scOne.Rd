@@ -2,25 +2,13 @@
 % Please edit documentation in R/soundcorrs.R
 \name{print.scOne}
 \alias{print.scOne}
-\title{A more reasonable display of a \code{\link{scOne}} object.}
+\title{Information that the \code{scOne} class is obsolete.}
 \usage{
-\method{print}{scOne}(x, ...)
+\method{print}{scOne}(...)
 }
 \arguments{
-\item{x}{[scOne] The \code{\link{scOne}} object.}
-
-\item{...}{Unused; only for consistency with \code{\link{print}}.}
-}
-\value{
-A more human-friendly digest.
+\item{...}{Ignored, only for compatibilty.}
 }
 \description{
-A more reasonable display of a \code{\link{scOne}} object.
-}
-\examples{
-# path to sample data in the "wide format"
-fNameData <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
-# path to a sample transcription
-fNameTrans <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
-read.scOne (fNameData, "German", "ALIGNED.German", fNameTrans)
+Since version 0.2.0 it has been replaced with the \code{\link{soundcorrs}} class.
 }

@@ -24,7 +24,7 @@ transcription(
 [transcription] A \code{transcription} object containing the provided data.
 }
 \description{
-Take a data frame containing transcription and turn it into a \code{transcription} object, as required by the \code{\link{soundcorrs}} constructor function. In a normal workflow, the user should have no need to call this function other than through \code{\link{read.transcription}}.
+Take a data frame containing transcription and turn it into a \code{transcription} object, as required by the \code{\link{soundcorrs}} constructor function. In the normal workflow, the user should have no need to call this function other than through \code{\link{read.transcription}}.
 }
 \section{Fields}{
 

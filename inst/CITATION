@@ -1,15 +1,15 @@
 citHeader ("To cite soundcorrs in publication use:")
 
 citEntry (entry	= "Article",
-	title		= "{soundcorrs}: Tools for Semi-Automatic Analysis of Sound Correspondences",
+	title		= "Tools for Semi-Automatic Analysis of Sound Correspondences: The {soundcorrs} Package for R",
 	author		= personList(as.person("Kamil Stachowski")),
-	journal		= "[tbd]",
-	volume		= "",
+	journal		= "Glottometrics",
+	volume		= "49",
 	number		= "",
-	pages		= "",
-	year		= "[forthcoming]",
-	url			= "",
+	pages		= "66–86",
+	year		= "2020",
+	url			= "http://info.filg.uj.edu.pl/zhjij/~stachowski.kamil/store/pub/stachowski_k-tools_for_semi_automatic_analysis_.pdf",
 
-	textVersion	= paste("Stachowski, Kamil [forthcoming].",
-						"soundcorrs: Tools for Semi-Automatic Analysis of Sound Correspondences")
+	textVersion	= paste("Stachowski, Kamil (2020).",
+						"Tools for Semi-Automatic Analysis of Sound Correspondences: The soundcorrs Package for R")
 )

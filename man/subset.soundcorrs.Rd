@@ -25,5 +25,5 @@ Reduce a \code{\link{soundcorrs}} object to just those word pairs/triples/... wh
 dataset <- sampleSoundCorrsData.capitals
 subset (dataset, OFFICIAL.LANGUAGE=="German")
 subset (dataset, grepl("German",OFFICIAL.LANGUAGE))
-subset (dataset, findPairs(dataset, "\u00E4", "e")$which)  # a-diaeresis
+subset (dataset, findExamples(dataset, "\u00E4", "e", "")$which)  # a-diaeresis
 }

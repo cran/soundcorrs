@@ -1,3 +1,30 @@
+soundcorrs 0.2.0 (2020-09-01)
+=============================
+
+Additions
+* findExamples(), a replacement for findPairs() that is not limited
+	to two languages, and can deal with missing values (NA).
+* merge() to combine multiple soundcorrs objects.
+
+Changes
+* scOne is now obsolete.
+	Reading is done with read.soundcorrs() or soundcorrs(), and the results
+	are merged using merge().
+* findPairs() is now just a wrapper around findExamples().
+* ngrams() now has a different set of arguments.
+* summary() now accepts more than two languages and doesn’t have the direction
+	argument.
+* table() is now called coocc().
+	It accepts more than two languages and doesn’t have the direction argument.
+* allTables() is now called allCooccs().
+	It doesn’t have the direction argument anymore.
+* Minor correcitions to various functions.
+
+Removals
+* findSegments() is no longer available.
+	If you need its functionality, please contact kamil.stachowski@gmail.com.
+
+
 soundcorrs 0.1.1 (2020-04-24)
 =============================
 

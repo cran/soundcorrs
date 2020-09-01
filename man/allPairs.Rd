@@ -27,7 +27,7 @@ allPairs(data, file, count, unit, direction, cols, formatter, ...)
 Take all segment-to-segment correspondences in the dataset, and produce for each a section composed of a title, a contingency table of all renderings of the given segment, and subsections listing all word pairs in which the given rendering is attested, all nicely formatted.
 }
 \examples{
-dataset <- sampleSoundCorrsData.capitals
+dataset <- sampleSoundCorrsData.abc
 allPairs (dataset)
-allPairs (dataset, formatter=formatter.latex, cols=c("ORTHOGRAPHY.German","ORTHOGRAPHY.Polish"))
+allPairs (dataset, formatter=formatter.latex, cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
 }

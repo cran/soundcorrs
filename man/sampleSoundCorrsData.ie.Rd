@@ -4,7 +4,9 @@
 \name{sampleSoundCorrsData.ie}
 \alias{sampleSoundCorrsData.ie}
 \title{A sample dataset with a dozen words in English, Gothic, Greek, and Latin.}
-\format{A \code{\link{soundcorrs}} object.}
+\format{
+A \code{\link{soundcorrs}} object.
+}
 \source{
 Campbell L. 2013. Historical Linguistics. An Introduction. Edinburgh University Press. Pp. 136f.
 }

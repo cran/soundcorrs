@@ -1,5 +1,9 @@
 # vim: set shiftwidth=4 tabstop=4 foldmarker=<<<,>>>:
 
+.onAttach <- function (libname, pkgname) {
+	packageStartupMessage ("NOTE. Version 0.2.0 introduces some important changes.\nPlease consult https://cran.r-project.org/web/packages/soundcorrs/NEWS and run vignette(\"soundcorrs\").\n")
+}
+
 # = helpers ======================================================================================== <<< =
 
 # - %.% -------------------------------------------------------------------------------------------- <<< -
@@ -118,6 +122,23 @@ list.depth <- function (x, d=0) {
 }
 
 # -------------------------------------------------------------------------------------------------- >>> -
+# - list.transpose --------------------------------------------------------------------------------- <<< -
+
+#' @title Transpose a nested list.
+#' @description Taken from https://rdrr.io/cran/stackoverflow/src/R/tlist.R. I prefer to copy a short bit of code than to add a dependency.
+#' @param x [list] The list to be transposed.
+#' @return [list] The transposed list.
+#' @keywords internal
+#' @importFrom stats setNames
+#' @examples
+#' soundcorrs:::list.transpose (list (1:3, 4:6, 7:9))
+
+list.transpose <- function (x) {
+	x <- do.call (rbind, x)
+	lapply (setNames (seq(ncol(x)), colnames(x)), function(j) x[,j])
+}
+
+# -------------------------------------------------------------------------------------------------- >>> -
 # - tabAbs2Rel ------------------------------------------------------------------------------------- <<< -
 
 #' @title Convert a table from absolute to relative values.
@@ -128,7 +149,7 @@ list.depth <- function (x, d=0) {
 #' @keywords internal
 #' @examples
 #' dataset <- sampleSoundCorrsData.abc
-#' soundcorrs:::tabAbs2Rel (table(dataset,unit="o",direction=2), NULL)
+#' soundcorrs:::tabAbs2Rel (coocc(dataset,unit="o"), NULL)
 
 tabAbs2Rel <- function (tab, column) {
 
@@ -158,88 +179,6 @@ tabAbs2Rel <- function (tab, column) {
 
 	# return the result
 	return (res)
-}
-
-# -------------------------------------------------------------------------------------------------- >>> -
-# - tableOne --------------------------------------------------------------------------------------- <<< -
-
-#' @title Build a contingency table counting either occurrences or words.
-#' @description Make a table out of one list.
-#' @param rows [list] The list that will become both rows and cols, divided into words.
-#' @param unit [character] Count occurrences or words? Accepted values are \code{"o(cc(urence(s))))"} and \code{"w(or(d(s)))"}.
-#' @return [table] The contingency table.
-#' @keywords internal
-#' @examples
-#' dataset <- sampleSoundCorrsData.abc
-#' soundcorrs:::tableOne (dataset$segms[[1]]$z, "o")
-
-tableOne <- function (rows, unit) {
-
-	# convenience vars
-	rows.unq <- sort (unique (unlist (rows)))
-
-	# prepare to capture the result
-	res <- matrix (0, ncol=length(rows.unq), nrow=length(rows.unq))
-	rownames(res) <- colnames(res) <- rows.unq
-
-	# count the occurrences or words
-	for (i in 1:length(rows))
-		if (unit == "o") {
-
-			tmp <- table (expand.grid (rows[[i]], rows[[i]]))
-			res[rownames(tmp),colnames(tmp)] <- res[rownames(tmp),colnames(tmp)] + tmp
-
-		} else {
-
-			res[rows[[i]],rows[[i]]] <- res[rows[[i]],rows[[i]]] + 1
-
-		}
-
-	# convert from matrix
-	return (as.table(res))
-
-}
-
-# -------------------------------------------------------------------------------------------------- >>> -
-# - tableTwo --------------------------------------------------------------------------------------- <<< -
-
-#' @title Build a contingency table counting either occurrences or words.
-#' @description Make a table out of two lists.
-#' @param rows [list] The list that will become rows, divided into words.
-#' @param cols [list] The list that will become cols, divided into words.
-#' @param unit [character] Count occurrences or words? Accepted values are \code{"o(cc(urence(s))))"} and \code{"w(or(d(s)))"}.
-#' @return [table] The contingency table.
-#' @keywords internal
-#' @examples
-#' dataset <- sampleSoundCorrsData.abc
-#' soundcorrs:::tableTwo (dataset$segms[[1]]$z, dataset$segms[[2]]$z, "o")
-
-tableTwo <- function (rows, cols, unit) {
-
-	# make the table for occurrences
-	if (unit == "o") {
-
-		# this is the easy variant
-		res <- table (unlist(rows), unlist(cols))
-
-	# or for words
-	} else {
-
-		# zip rows, cols, and word number
-		wordpos <- mapply (rep, 1:length(rows), lapply(rows,length), SIMPLIFY=F)
-		tmp <- mapply (c, unlist(rows), unlist(cols), unlist(wordpos), SIMPLIFY=F)
-
-		# remove duplicate triples
-		tmp <- unique (tmp)
-
-		# and then make a table out of them
-		res <- table (unlist(lapply(tmp,`[[`,1)), unlist(lapply(tmp,`[[`,2)))
-
-	}
-
-	# and return
-	return (res)
-
 }
 
 # -------------------------------------------------------------------------------------------------- >>> -
@@ -305,7 +244,11 @@ revChar <- function (x)
 #' addSeparators (c("word","mot","focal"), ".")
 
 addSeparators <- function (x, separator="|")
-	unlist (lapply (strsplit (as.character(x),""), paste0, collapse=separator))
+	unlist (lapply (x, function(y)
+		if (is.na(y))
+			y
+		else
+			paste0 (strsplit(as.character(y),"")[[1]], collapse=separator)))
 
 # -------------------------------------------------------------------------------------------------- >>> -
 # - exp binTable ----------------------------------------------------------------------------------- <<< -
@@ -486,7 +429,7 @@ fitTable <- function (models, data, margin, conv=vec2df.id, ...) {
 vec2df.id <- function (data) {
 
 	# return the result
-	return (data.frame (X=1:length(data), Y=data))
+	return (data.frame (X=seq_along(data), Y=data))
 
 }
 
@@ -542,7 +485,7 @@ vec2df.hist <- function (data) {
 vec2df.rank <- function (data) {
 
 	# return the result
-	return (data.frame (X=1:length(data), Y=sort(data,decreasing=T)))
+	return (data.frame (X=seq_along(data), Y=sort(data,decreasing=T)))
 
 }
 
@@ -560,8 +503,8 @@ vec2df.rank <- function (data) {
 #' @export
 #' @examples
 #' dataset <- sampleSoundCorrsData.abc
-#' lapplyTest (allTables(dataset))
-#' lapplyTest (allTables(dataset), fisher.test, simulate.p.value=TRUE)
+#' lapplyTest (allCooccs(dataset))
+#' lapplyTest (allCooccs(dataset), fisher.test, simulate.p.value=TRUE)
 
 lapplyTest <- function (x, fun=chisq.test, ...) {
 
@@ -622,7 +565,7 @@ long2wide <- function (data, col.lang="LANGUAGE", skip=NULL) {
 	if (any(is.na(tmp) | tmp==""))
 		stop ("Column names cannot be empty strings or NA.")
 	if (any(tmp %nin% colnames(data)))
-		stop ("One or more column names are missing from \"",substitute(data),"\".")
+		stop ("One or more column names are missing from \"data\".")
 
 	# split the data
 	res <- split (data, data[,col.lang])
@@ -633,7 +576,7 @@ long2wide <- function (data, col.lang="LANGUAGE", skip=NULL) {
 
 	# separate columns to be skipped, and add suffixes to column names
 	skips <- list ()
-	for (i in 1:length(res)) {
+	for (i in seq_along(res)) {
 		# separate columns to be skipped
 		tmp <- res[[i]][,skip,drop=F]
 		rownames(tmp) <- 1:nrow(tmp)
@@ -691,7 +634,7 @@ multiFit <- function (models, data, fun=nls, ...) {
 			fun (formula=model$formula, data=dat, start=model$start[[1]])
 
 		}, warning = function (w) {
-			
+
 			tmp <- fun (formula=model$formula, data=dat, start=model$start[[1]])
 			attr(tmp,"warning") <- w
 			return (tmp)
@@ -733,6 +676,64 @@ multiFit <- function (models, data, fun=nls, ...) {
 }
 
 # -------------------------------------------------------------------------------------------------- >>> -
+# - exp ngrams ------------------------------------------------------------------------------------- <<< -
+
+#' @title N-grams and their frequencies.
+#' @description Find n-grams of specified length and return them as a list, or their counts as a table.
+#' @param x [character vector] Words to be cut into n-grams.
+#' @param n [integer] The length of n-grams to look for. Defaults to \code{1}.
+#' @param borders [character] Characters to prepend and append to every word. Must be a vector of exactly two character strings. Defaults to \code{c("","")}.
+#' @param rm [character] Characters to be removed from \code{x} before cutting into n-grams. May be a regular expression, f.ex. "[-\\|]" will capture the default symbol for linguistics zeros as well as the default segment separators. Empty string denotes nothing to replace. Defaults to empty string.
+#' @param as.table [logical] Return the result as a table? Defaults to \code{TRUE}.
+#' @return [table] Table with counts of n-grams.
+#' @export
+#' @examples
+#' dataset <- sampleSoundCorrsData.capitals
+#' ngrams(dataset$data[,"ALIGNED.German"], n=2)
+#' ngrams(dataset$data[,"ALIGNED.German"], n=3, as.table=FALSE)
+#' ngrams(dataset$data[,"ALIGNED.German"], n=4, rm="[-\\|]", as.table=FALSE)
+#' ngrams(dataset$data[,"ALIGNED.German"], n=5, borders=c(">","<"), rm="[-\\|]", as.table=FALSE)
+
+#' @export
+ngrams <- function (x, n=1, borders=c("",""), rm="", as.table=T) {
+
+	# check args
+	if (n%%1!=0 || n<1)
+		stop ("\"n\" must be a positive integer.")
+	if (class(borders)!="character" | length(borders)!=2)
+		stop ("\"borders\" must be a vector of two character strings.")
+	if (class(rm)!="character" | length(rm)>1)
+		stop ("\"rm\" must be a single character string.")
+	if (class(as.table) != "logical")
+		stop ("\"as.table\" must be either TRUE or FALSE.")
+
+	# remember where NAs are
+	nas <- which (is.na(x))
+
+	# maybe add something
+	tmp <- lapply (x, function(y) paste0(borders[1],y,borders[2]))
+
+	# maybe remove something
+	tmp <- gsub (rm, "", tmp)
+
+	# extract the ngrams
+	res <- lapply (tmp, function (y)
+		if (n >= nchar(y)) y else
+			mapply (substr, 1:(nchar(y)-n+1), n:nchar(y), MoreArgs=list(x=y))
+	)
+
+	# put back the NAs
+	res[nas] <- NA
+
+	# prepare the result
+	if (as.table) res<-table(unlist(res))
+
+	# return the result
+	return (res)
+
+}
+
+# -------------------------------------------------------------------------------------------------- >>> -
 # - exp summary.list.lapplyTest -------------------------------------------------------------------- <<< -
 
 #' @title A quick summary of the result of \code{\link{lapplyTest}}.
@@ -744,7 +745,7 @@ multiFit <- function (models, data, fun=nls, ...) {
 #' @export
 #' @examples
 #' dataset <- sampleSoundCorrsData.abc
-#' lapplyTest (allTables(dataset))
+#' lapplyTest (allCooccs(dataset))
 
 summary.list.lapplyTest <- function (object, p.value=0.05, ...) {
 
@@ -756,7 +757,7 @@ summary.list.lapplyTest <- function (object, p.value=0.05, ...) {
 
 	# and the lucky results
 	if (length(res) > 0) {
-		for (i in 1:length(res)) {
+		for (i in seq_along(res)) {
 			prnt <- if (any(c("error","warning") %in% names(attributes(res[[i]])))) "! " else "  "
 			tmp <- unlist (strsplit (names(res)[i], "_"))
 			prnt <-
@@ -865,7 +866,7 @@ wide2long <- function (data, suffixes, col.lang="LANGUAGE", strip=0) {
 		stop ("Differing number of columns for different suffixes.")
 
 	# make sure column names match
-	nams <- lapply (1:length(cols), function (i)
+	nams <- lapply (seq_along(cols), function (i)
 		revChar (substr (revChar(colnames(data)[cols[[i]]]), nchar(suffixes[i])+1, 10000)))
 	if (length(unique(unlist(nams))) != length(cols[[1]]))
 		stop ("Differing column names for different suffixes.")
@@ -882,7 +883,7 @@ wide2long <- function (data, suffixes, col.lang="LANGUAGE", strip=0) {
 	# the actual conversion
 	cn <- c (sort(nams[[1]]), colnames(data)[sless], col.lang)
 	res <- data.frame ()
-	for (i in 1:length(cols)) {
+	for (i in seq_along(cols)) {
 		tmp <- data [, c(cols[[i]], sless)]
 		tmp <- cbind (tmp, suffixes[i])
 		colnames(tmp) <- cn
@@ -897,89 +898,98 @@ wide2long <- function (data, suffixes, col.lang="LANGUAGE", strip=0) {
 # -------------------------------------------------------------------------------------------------- >>> -
 
 # ================================================================================================== >>> =
-# = scOne ========================================================================================== <<< =
+# = soundcorrs ===================================================================================== <<< =
 
-# - exp scOne -------------------------------------------------------------------------------------- <<< -
+# - exp soundcorrs --------------------------------------------------------------------------------- <<< -
 
-#' @title Constructor function for the \code{scOne} class.
-#' @description Take a data frame containing data for one language, in the wide format, and combine it with metadata into a \code{scOne} object. In a normal workflow, the user should have no need to invoke this function other than through \code{\link{read.scOne}}.
+#' @title Constructor function for the \code{soundcorrs} class.
+#' @description Take a data frame and turn it into a \code{soundcorrs} object containing data for one language. To obtain a \code{soundcorrs} object containing data for multiple languages, see \code{\link{merge.soundcorrs}}. In the normal workflow, the user should have no need to call this constructor other than through \code{\link{read.soundcorrs}}.
 #' @param data [data.frame] Data for one language.
 #' @param name [character] Name of the language.
 #' @param col.aligned [character] Name of the column with the aligned words.
 #' @param transcription [transcription] The \code{\link{transcription}} for the given language.
 #' @param separator [character] String used to separate segments in \code{col.aligned}. Defaults to \code{"\\|"}.
-#' @return [scOne] A \code{scOne} object containing the data and metadata for one language.
+#' @return [soundcorrs] An object containing the data and metadata for one language.
 #' @field cols [character list] Names of important columns.
 #' @field data [data.frame] The original data.
-#' @field name [character] Name of the language.
+#' @field names [character] Name of the language.
 #' @field segms [character list] Words exploded into segments. With linguistic zeros preserved (\code{$z}) or removed (\code{$nz}).
 #' @field segpos [integer list] A lookup list to check which character belongs to which segment. Counted with linguistic zeros preserved (\code{$z}) and removed (\code{$nz}).
-#' @field separator [character] The string used as segment separator in \code{col.aligned}.
-#' @field trans [transcription] The \code{\link{transcription}} object for the language.
-#' @field words [character list] Words obtained by removing separators from the \code{col.aligned} column. With linguistic zeros (\code{$z}) or without them (\code{$nz}).
+#' @field separators [character] The strings used as segment separator in \code{cols$aligned}.
+#' @field trans [transcription] The transcription.
+#' @field words [character list] Words obtained by removing separators from the \code{cols$aligned} columns. With linguistic zeros (\code{$z}) or without them (\code{$nz}).
 #' @export
 #' @importFrom utils type.convert
 #' @examples
+#' # read sample data in the "wide format"
 #' fNameData <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
-#' fNameTrans <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
 #' readData <- read.table (fNameData, header=TRUE)
+#' # read the sample transcription
+#' fNameTrans <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
 #' readTrans <- read.transcription (fNameTrans)
-#' ger <- scOne (readData, "German", "ALIGNED.German", readTrans)
+#' # make out of them a soundcorrs object
+#' ger <- soundcorrs (readData, "German", "ALIGNED.German", readTrans)
+#' pol <- soundcorrs (readData, "Polish", "ALIGNED.Polish", readTrans)
+#' spa <- soundcorrs (readData, "Spanish", "ALIGNED.Spanish", readTrans)
+#' dataset <- merge (ger, pol, spa)
 
-scOne <- function (data, name, col.aligned, transcription, separator="\\|") {
+soundcorrs <- function (data, name, col.aligned, transcription, separator="\\|") {
+
+	# check args
+	if (class(data) != "data.frame")
+		stop ("\"data\" must be a data.frame")
+	if (class(name) != "character")
+		stop ("\"name\" must be a string.")
+	if (class(col.aligned) != "character")
+		stop ("\"col.aligned\" must be a string.")
+	if (class(transcription) != "transcription")
+		stop ("\"col.aligned\" must be a \"transcription\" object")
+	if (class(separator) != "character")
+		stop ("\"separator\" must be a string.")
 
 	# check column name
 	if (length(col.aligned) != 1)
 		stop ("\"col.aligned\" must be exactly one column name.")
 	if (col.aligned %nin% colnames(data))
-		stop ("Column \"", col.aligned, "\" is missing from \"", substitute(data), "\".")
+		stop ("Column \"", col.aligned, "\" missing from \"data\".")
 
-	# check transcription is a transcription
-	if (class(transcription) != "transcription")
-		stop ("\"", substitute(transcription), "\" must be of class \"transcription\".")
-
-	# check separator is not empty string
-	if (separator=="" | is.na(separator) | is.null(separator))
-		stop ("\"separator\" cannot be an empty string, NA, or NULL.")
+	# check separator not empty string, na, nan, or null
+	if (separator=="" | is.na(separator) | is.nan(separator) | is.null(separator))
+		stop ("\"separator\" cannot be an empty string, NA, NaN, or NULL")
 
 	# remove factors
 	data <- type.convert (data, as.is=T)
 
 	# explode into segments
 	tmp <- as.vector (data[,col.aligned])
+	tmp <- gsub (paste0(separator,"+"), separator, tmp)		# rm multiple separators
+	tmp <- gsub (paste0("^",separator), "", tmp)			# rm separators from beginning, cause strsplit doesn't
 	segms.z <- strsplit (tmp, separator)
-	if (!is.na(transcription$zero)) {
-		tmp <- gsub (transcription$zero, "", tmp)
-		tmp <- gsub (paste0(separator,"+"), separator, tmp)		# rm multiple separators
-		tmp <- gsub (paste0("^",separator), "", tmp)			# rm separators from beginning, cause strsplit doesn't
-		segms.nz <- strsplit (tmp, separator)
-	} else {
-		segms.nz <- segms.z
-	}
+	segms.nz <- strsplit (gsub(transcription$zero,"",tmp), separator)
 
 	# check zeros always separate segments
-	if (!is.na(transcription$zero)) {
-		tmp.err <- Filter (function(x) nchar(x)>1 && grep(transcription$zero,x), unlist(segms.z))
-		if (length(tmp.err) > 0)
-			stop ("Linguistic zeros must be separate segments: ", collapse(tmp.err,inter=", "), ".")
-	}
+	tmp.err <- Filter (function(x) nchar(x)>1 && grep(transcription$zero,x), unlist(segms.z))
+	if (length(tmp.err) > 0)
+		stop ("Linguistic zeros must be separate segments: ", collapse(tmp.err,inter=", "), ".")
 
 	# warn if the transcription doesn't cover everything
 	tmp.used <- unique (unlist (segms.z))
+	tmp.used <- tmp.used [!is.na(tmp.used)]
 	tmp.err <- tmp.used[tmp.used %nin% transcription$data[,transcription$cols$grapheme]]
 	if (length(tmp.err) > 0)
 		warning ("The following segments are not covered by the transcription: ", collapse(tmp.err,inter=", "), ".")
 
 	# unexplode words, with and without zeros
-	words.z <- unlist (lapply (segms.z, collapse))
-	words.nz <- unlist (lapply (segms.nz, collapse))
+	words.z <- unlist (lapply (segms.z, function(x) if (is.na(x[1])) NA else collapse(x)))
+	words.nz <- unlist (lapply (segms.nz, function(x) if (is.na(x[1])) NA else collapse(x)))
 
 	# check for eregexp metacharacters
 	meta <- gregexpr ("[][\\(\\)\\{\\}\\.\\+\\*\\^\\\\\\$\\?\\|]", words.z)[[1]]
+	meta [is.na(meta)] <- -1
 	if (meta != -1) {
 		tmp <- strsplit (words.z, "")[[1]] [meta]
 		tmp <- collapse (sort(unique(tmp)), inter=", ")
-		stop ("Extended regular expressions metacharacters are used in the data: ", tmp, ".")
+		stop ("Extended regular expressions metacharacters in the data: ", tmp, ".")
 	}
 
 	# check for transcription metacharacters
@@ -987,246 +997,33 @@ scOne <- function (data, name, col.aligned, transcription, separator="\\|") {
 	if (any(tmp)) {
 		tmp2 <- paste0 ("(",collapse(transcription$data[tmp,transcription$cols$grapheme],inter="|"),")")
 		meta <- gregexpr (tmp2, words.z)[[1]]
+		meta [is.na(meta)] <- -1
 		if (meta != -1) {
 			tmp3 <- strsplit (words.z, "")[[1]] [meta]
 			tmp3 <- collapse (sort(unique(tmp3)), inter=", ")
-			stop ("Transcription metacharacters are used in the data: ", tmp3, ".")
+			stop ("Transcription metacharacters in the data: ", tmp3, ".")
 		}
 	}
 
 	# generate a lookup table for segments after separators and zeros are removed
 	segpos.z <- lapply (segms.z, function (i)
-		unlist (mapply (rep, 1:length(i), nchar(i), SIMPLIFY=F)))
-	if (!is.na(transcription$zero))
-		segpos.nz <- mapply (function (p, m)
-				p [p %nin% grep(transcription$zero, m)]
-			, segpos.z, segms.z, SIMPLIFY=F)
-	else
-		segpos.nz <- segpos.z
+		if (is.na(i[1])) NA else
+			unlist (mapply (rep, seq_along(i), nchar(i), SIMPLIFY=F))
+	)
+	segpos.nz <- mapply (function (p, m)
+		p [p %nin% grep(transcription$zero, m)]
+		, segpos.z, segms.z, SIMPLIFY=F)
 
 	# wrap in an object
 	res <- list (
-		cols = list (aligned=col.aligned),			# an overkill, but flexible for the future and in line with transcription
+		cols = list (list (aligned=col.aligned)),			# an overkill, but flexible for the future and in line with transcription
 		data = data,
-		name = name,
-		segms = list (z=segms.z, nz=segms.nz),
-		segpos = list (z=segpos.z, nz=segpos.nz),
-		separator = separator,
-		trans = transcription,
-		words = list (z=words.z, nz=words.nz)
-	)
-	class(res) <- "scOne"
-
-	# return the result
-	return (res)
-
-}
-
-# -------------------------------------------------------------------------------------------------- >>> -
-# - exp ngrams.scOne ------------------------------------------------------------------------------- <<< -
-
-#' @title Frequencies of n-grams.
-#' @description Find n-grams of specified length and return their counts.
-#' @param data [scOne] A \code{\link{scOne}} object in which to look for n-grams.
-#' @param n [integer] The length of n-grams to look for. Defaults to \code{1}.
-#' @param zeros [logical] Include linguistic zeros? Defaults to \code{TRUE}.
-#' @param as.table [logical] Return the result as a table? Defaults to \code{TRUE}.
-#' @return [table] Table with counts of n-grams.
-#' @export
-#' @examples
-#' # path to sample data in the "wide format"
-#' fNameData <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
-#' # path to a sample transcription
-#' fNameTrans <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
-#' d.cap.ger <- read.scOne (fNameData, "German", "ALIGNED.German", fNameTrans)
-#' ngrams (d.cap.ger, 2)
-#' ngrams (d.cap.ger, 2, FALSE)
-
-ngrams <- function (data, n, zeros, as.table)
-	UseMethod ("ngrams")
-
-#' @export
-ngrams.default <- function (data, n, zeros, as.table)
-	stop ("This function does not know how to handle an object of class \"",class(data),"\".")
-
-#' @export
-ngrams.scOne <- function (data, n=1, zeros=T, as.table=T) {
-
-	# check args
-	if (class(data) != "scOne")
-		stop ("\"data\" must be of class \"scOne\".")
-	if (n%%1!=0 || n<1)
-		stop ("\"n\" must be a positive integer.")
-	if (class(zeros) != "logical")
-		stop ("\"zeros\" must be either TRUE or FALSE.")
-
-	# prep the vars
-	sep <- gsub ("\\\\", "", data$separator)
-	segms <- if (zeros) data$segms$z else data$segms$nz
-
-	# extract the ngrams
-	res <- lapply (segms, function (x) {if (length(x) >= n) {
-		froms <- 1:(length(x)-n+1)
-		tos <- n:length(x)
-		mapply (function(y,z) collapse(x[y:z],inter=sep), froms, tos)
-	}})
-
-	# prepare the result
-	if (as.table) res<-table(unlist(res))
-
-	# return the result
-	return (res)
-
-}
-
-# -------------------------------------------------------------------------------------------------- >>> -
-# - exp print.scOne -------------------------------------------------------------------------------- <<< -
-
-#' A more reasonable display of a \code{\link{scOne}} object.
-#' @param x [scOne] The \code{\link{scOne}} object.
-#' @param ... Unused; only for consistency with \code{\link{print}}.
-#' @return A more human-friendly digest.
-#' @export
-#' @examples
-#' # path to sample data in the "wide format"
-#' fNameData <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
-#' # path to a sample transcription
-#' fNameTrans <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
-#' read.scOne (fNameData, "German", "ALIGNED.German", fNameTrans)
-
-print.scOne <- function (x, ...) {
-
-	# print the data
-	cat ("A \"scOne\" object.\n")
-	if (!is.null(attr(x,"file")))
-		cat (paste0("  File: ", attr(x,"file"), ".\n"))
-	cat (paste0("  Language: ", x$name, ".\n"))
-	cat (paste0("  Entries: ", nrow(x$data), ".\n"))
-	cat (paste0("  Columns (", ncol(x$data), "): ", collapse(colnames(x$data),inter=", "), ".\n"))
-	if (!is.null(attr(x$trans,"file")))
-		cat (paste0("  Transcription: ", attr(x$trans,"file"), ".\n"))
-	cat ("\n")
-
-	# and return it under the counter
-	invisible (x)
-}
-
-# -------------------------------------------------------------------------------------------------- >>> -
-# - exp read.scOne --------------------------------------------------------------------------------- <<< -
-
-#' @title Read data for a single language from a tsv file.
-#' @description Read the data for one language, from a file in the wide format, and combine it with metadata into a \code{\link{scOne}} object.
-#' @param file [character] Path to the data file in the wide format.
-#' @param name [character] Name of the language.
-#' @param col.aligned [character] Name of the column with the aligned words.
-#' @param transcription [character] Path to the file with the transcription.
-#' @param separator [character] String used to separate segments in \code{col.aligned}. Defaults to \code{"\\|"}.
-#' @return [scOne] An object containing the data and metadata for one language.
-#' @export
-#' @importFrom utils read.table
-#' @examples
-#' # path to sample data in the "wide format"
-#' fNameData <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
-#' # path to a sample transcription
-#' fNameTrans <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
-#' ger <- read.scOne (fNameData, "German", "ALIGNED.German", fNameTrans)
-
-read.scOne <- function (file, name, col.aligned, transcription, separator="\\|") {
-
-	# check args
-	tmp <- list (file=file, name=name, col.aligned=col.aligned, transcription=transcription, separator=separator)
-	err <- which (lapply(tmp,class) != "character")
-	if (length(err) > 0)
-		stop ("\"", names(tmp)[err[1]], "\" must be a character string.")
-
-	# read in the data
-	data <- read.table (file, header=T, stringsAsFactors=F, quote="")
-
-	# pack data into an object
-	res <- scOne (data, name, col.aligned, read.transcription(transcription), separator)
-	attr(res,"file") <- file
-
-	# return the result
-	return (res)
-
-}
-
-# -------------------------------------------------------------------------------------------------- >>> -
-
-# ================================================================================================== >>> =
-# = soundcorrs ===================================================================================== <<< =
-
-# - exp soundcorrs --------------------------------------------------------------------------------- <<< -
-
-#' @title Constructor function for the \code{soundcorrs} class.
-#' @description Take multiple \code{\link{scOne}} objects and combine them into a single \code{soundcorrs} object.
-#' @param ... [scOne] Multiple \code{\link{scOne}} objects to be combined.
-#' @return [soundcorrs] An object containing the data and metadata for multiple language.
-#' @field cols [character list] Names of important columns.
-#' @field data [data.frame] The original data, merged.
-#' @field name [character] Names of the languages.
-#' @field segms [character list] Words exploded into segments. With linguistic zeros preserved (\code{$z}) or removed (\code{$nz}).
-#' @field segpos [integer list] A lookup list to check which character belongs to which segment. Counted with linguistic zeros preserved (\code{$z}) and removed (\code{$nz}).
-#' @field separators [character] Strings used as segment separators in \code{cols$aligned}.
-#' @field trans [transcription] \code{\link{transcription}} objects.
-#' @field words [character list] Words obtained by removing separators from the \code{cols$aligned} columns. With linguistic zeros (\code{$z}) or without them (\code{$nz}).
-#' @export
-#' @examples
-#' # path to sample data in the "wide format"
-#' fNameData <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
-#' # path to a sample transcription
-#' fNameTrans <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
-#' ger <- read.scOne (fNameData, "German", "ALIGNED.German", fNameTrans)
-#' pol <- read.scOne (fNameData, "Polish", "ALIGNED.Polish", fNameTrans)
-#' spa <- read.scOne (fNameData, "Spanish", "ALIGNED.Spanish", fNameTrans)
-#' dataset <- soundcorrs (ger, pol, spa)
-
-soundcorrs <- function (...) {
-
-	# convert the dots
-	ones <- list (...)
-
-	# make sure there are at least two languages
-	if (length(ones) < 2)
-		stop ("At least two \"scOne\" objects are required.")
-	if (length(ones) > 2)
-		warning ("In this version of \"soundcorrs\", most functions only support two languages.")
-
-	# make sure all are scOne objects
-	if (any(sapply(ones,class) != "scOne"))
-		stop ("All arguments must be of class \"scOne\".")
-
-	# make sure all have the same nr of entries
-	if (length(unique(sapply(ones, function(x) nrow(x$data)))) != 1)
-		stop ("Differing number of entries between the specified \"scOne\" objects.")
-
-	# make sure segments align
-	tmp.lng <- lapply (ones, function(x) sapply(x$segms$z,length))
-	tmp.err <- c ()
-	for (i in 1:length(tmp.lng[[1]])) {
-		tmp <- sapply (tmp.lng, function(x) x[i])
-		if (length(unique(tmp))!=1) tmp.err<-c(tmp.err,i)
-	}
-	if (length(tmp.err) > 0)
-		stop ("Differing number of segments in entries: ", collapse(tmp.err,inter=", "), ".")
-
-	# combine all data frames into one
-	data <- Reduce (function(x,y) merge(x,y,sort=F), lapply(ones, `[[`, "data"))
-
-	# make sure the merging worked
-	if (nrow(data) != nrow(ones[[1]]$data))
-		stop ("Incompatible datasets. Perhaps conflicting column names?")
-
-	# wrap into an object
-	res <- list (
-		cols = lapply (ones, `[[`, "cols"),
-		data = data,
-		names = sapply (ones, `[[`, "name"),
-		segms = lapply (ones, `[[`, "segms"),
-		segpos = lapply (ones, `[[`, "segpos"),
-		separators = sapply (ones, `[[`, "separator"),
-		trans = lapply (ones, `[[`, "trans"),
-		words = lapply (ones, `[[`, "words")
+		names = name,
+		segms = list (list (z=segms.z, nz=segms.nz)),
+		segpos = list (list (z=segpos.z, nz=segpos.nz)),
+		separators = separator,
+		trans = list (transcription),
+		words = list (list (z=words.z, nz=words.nz))
 	)
 	class(res) <- "soundcorrs"
 
@@ -1251,9 +1048,9 @@ soundcorrs <- function (...) {
 #' @export
 #' @importFrom utils browseURL
 #' @examples
-#' dataset <- sampleSoundCorrsData.capitals
+#' dataset <- sampleSoundCorrsData.abc
 #' allPairs (dataset)
-#' allPairs (dataset, formatter=formatter.latex, cols=c("ORTHOGRAPHY.German","ORTHOGRAPHY.Polish"))
+#' allPairs (dataset, formatter=formatter.latex, cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
 
 allPairs <- function (data, file, count, unit, direction, cols, formatter, ...)
 	UseMethod ("allPairs")
@@ -1268,7 +1065,7 @@ allPairs.soundcorrs <- function (data, file=NULL, count="a", unit="w", direction
 
 	# check exactly two languages
 	if (length(data$names) != 2)
-		warning ("This function only supports two languages. The search is limited to ", data$names[1], " and ", data$names[2], ".")
+		stop ("This function only supports two languages.")
 
 	# convert cols if necessary
 	if (cols[1] == "all")
@@ -1294,21 +1091,28 @@ allPairs.soundcorrs <- function (data, file=NULL, count="a", unit="w", direction
 	# extract and format the needed bits
 	for (i in segms) {
 
-		# prepare the section title
-		res <- paste0 (res, formatter("section",i,...))
+		# findPairs won't handle NA in a query
+		if (!is.na(i)) {
 
-		# prepare the table
-		tab <- summary (data, count, unit, direction)[i,]
-		tab <- tab [tab!=0]
-		res <- paste0 (res, formatter("table",tab,...))
+			# prepare the section title
+			res <- paste0 (res, formatter("section",i,...))
 
-		# prepare the words
-		for (j in names(tab)) {
-			res <- paste0 (res, formatter("subsection",c(i,j),direction,...))
-			res <- paste0 (res, if (direction == 1)
-				formatter("data.frame", findPairs(data,i,j,exact=T,cols)$data, direction, ...)
-			else
-				formatter("data.frame", findPairs(data,j,i,exact=T,cols)$data, direction, ...))
+			# prepare the table
+			tab <- summary (data, count, unit, direction)[i,]
+			tab <- tab [tab!=0]
+			res <- paste0 (res, formatter("table",tab,...))
+
+			# prepare the words
+			for (j in names(tab)) {
+				if (!is.na(j)) {
+					res <- paste0 (res, formatter("subsection",c(i,j),direction,...))
+					res <- paste0 (res, if (direction == 1)
+						formatter("data.frame", findPairs(data,i,j,exact=T,cols)$data, direction, ...)
+					else
+						formatter("data.frame", findPairs(data,j,i,exact=T,cols)$data, direction, ...))
+				}
+			}
+
 		}
 
 	}
@@ -1335,8 +1139,9 @@ allPairs.soundcorrs <- function (data, file=NULL, count="a", unit="w", direction
 #' @return [character] Formatted x.
 #' @export
 #' @examples
-#' dataset <- sampleSoundCorrsData.capitals
+#' dataset <- sampleSoundCorrsData.abc
 #' allPairs (dataset, unit="o", formatter=formatter.html)
+
 formatter.html <- function (what, x, direction=1) {
 
 	# four possibilities
@@ -1386,8 +1191,9 @@ formatter.html <- function (what, x, direction=1) {
 #' @return [character] Formatted x.
 #' @export
 #' @examples
-#' dataset <- sampleSoundCorrsData.capitals
+#' dataset <- sampleSoundCorrsData.abc
 #' allPairs (dataset, unit="o", formatter=formatter.latex)
+
 formatter.latex <- function (what, x, direction=1) {
 
 	# four possibilities
@@ -1441,41 +1247,42 @@ formatter.latex <- function (what, x, direction=1) {
 #' @export
 #' @importFrom utils capture.output
 #' @examples
-#' dataset <- sampleSoundCorrsData.capitals
+#' dataset <- sampleSoundCorrsData.abc
 #' allPairs (dataset, unit="o", formatter=formatter.none)
+
 formatter.none <- function (what, x, direction=1)
 		paste0 (collapse (what, "\t", capture.output(x), inter="\n"), "\n")
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ->>> -
 
 # -------------------------------------------------------------------------------------------------- >>> -
-# - exp allTables.soundcross ----------------------------------------------------------------------- <<< -
+# - exp allCooccs.soundcross ----------------------------------------------------------------------- <<< -
 
-#' @title Generate all contingency tables for a dataset.
+#' @title Generate all co-occurrence contingency tables for a dataset.
 #' @description Generate all correspondence-to-correspondence or correspondence-to-metadata contingnecy tables for a dataset.
 #' @param data [soundcorrs] The dataset from which to draw frequencies. Only datasets with two languages are supported.
 #' @param column [character] Name of the column with metadata. If \code{NULL}, sound correspondences are cross-tabulated with themselves. Defaults to \code{NULL}.
 #' @param unit [character] Count how many times a correspondence occurs or in how many words it occurs. Accepted values are \code{"o(cc(ur(ence(s))))"} and \code{"w(or(d(s)))"}. Defaults to \code{"w"}.
 #' @param count [character] Report the absolute number of times or words, or relative to how many times or in how many words the given segments co-occur in L1 or L2. Accepted values are \code{"a(bs(olute))"} and \code{"r(el(ative))"}. Defaults to "a".
-#' @param direction [integer] If \code{1}, correspondences are in the order Language1 > Language2 ("x yields y"). If \code{2}, the order is Language2 < Language1 ("y originates from x"). Defaults to \code{1}.
 #' @param bin [logical] Whether to bin tables before applying \code{fun} to them. Defaults to \code{TRUE}.
 #' @return [list] A list of tables.
+#' @seealso \code{\link{table}}.
 #' @export
 #' @importFrom utils getTxtProgressBar setTxtProgressBar txtProgressBar
 #' @examples
 #' dataset <- sampleSoundCorrsData.abc
-#' allTables (dataset)
-#' allTables (dataset, "DIALECT.L2", unit="o")
+#' allCooccs (dataset)
+#' allCooccs (dataset, "DIALECT.L2", unit="o")
 
-allTables <- function (data, column, count, unit, direction, bin)
-	UseMethod ("allTables")
+allCooccs <- function (data, column, count, unit, bin)
+	UseMethod ("allCooccs")
 
 #' @export
-allTables.default <- function (data, column, count, unit, direction, bin)
+allCooccs.default <- function (data, column, count, unit, bin)
 	stop ("This function does not know how to handle an object of class \"",class(data),"\".")
 
 #' @export
-allTables.soundcorrs <- function (data, column=NULL, count="a", unit="w", direction=1, bin=T) {
+allCooccs.soundcorrs <- function (data, column=NULL, count="a", unit="w", bin=T) {
 
 # - allBins - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -<<< -
 
@@ -1499,12 +1306,8 @@ allTables.soundcorrs <- function (data, column=NULL, count="a", unit="w", direct
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ->>> -
 
-	# check exactly two languages
-	if (length(data$names) != 2)
-		warning ("This function only supports two languages. The search is limited to ", data$names[1], " and ", data$names[2], ".")
-
 	# prepare the table
-	tab <- table (data, column, count, unit, direction)
+	tab <- coocc (data, column, count, unit)
 
 	# prepare the blocks
 	blocks <- unlist (lapply (strsplit(rownames(tab),"_"), `[[`, 1))
@@ -1571,128 +1374,187 @@ cbind.soundcorrs <- function (data, ...) {
 }
 
 # -------------------------------------------------------------------------------------------------- >>> -
-# - exp char2value.soundcorrs ---------------------------------------------------------------------- <<< -
+# - exp coocc.soundcorrs --------------------------------------------------------------------------- <<< -
 
-#' @title Convert characters to their values.
-#' @description Convert a vector of characters to their values, as defined in the \code{\link{transcription}}.
-#' @param data [soundcorrs] The \code{\link{soundcorrs}} object which holds the \code{\link{transcription}}.
-#' @param language [character or integer] Which \code{\link{transcription}} to use; can be the name of the language, or its number (in which place it was listed when creating the \code{\link{soundcorrs}} object.
-#' @param x [character vector] Characters to convert.
-#' @return [character vector] Values, as defined in the \code{\link{transcription}}.
+#' @title Generate a contingency table of co-occurrences of sound correspondences with themselves, or with metadata.
+#' @description Take all segment-to-segment correspondences in a dataset, and cross-tabulate them with themselves or with metadata taken from a separate column.
+#' @param data [soundcorrs] The dataset from which to draw frequencies. Only datasets with two languages are supported.
+#' @param column [character] Name of the column with metadata. If \code{NULL}, sound correspondences are cross-tabulated with themselves. Defaults to \code{NULL}.
+#' @param count [character] Report the absolute number of times or words, or relative to how many times or in how many words the given segments co-occur in L1 or L2. Accepted values are \code{"a(bs(olute))"} and \code{"r(el(ative))"}. Defaults to "a".
+#' @param unit [character] Count how many times a correspondence occurs or in how many words it occurs. Accepted values are \code{"o(cc(ur(ence(s))))"} and \code{"w(or(d(s)))"}. Defaults to \code{"w"}.
+#' @return [table] The contingency table. The values represent how often the given correspondence co-occurs in the same word with the other correspondence or with the piece of metadata (cf. \code{\link{summary}}).
+#' @seealso \code{\link{summary}}, \code{\link{allCooccs}}.
 #' @export
 #' @examples
 #' dataset <- sampleSoundCorrsData.abc
-#' segms <- findSegments (dataset, "a", "o", +1)
-#' char2value (dataset, "L1", segms$L1)
+#' coocc (dataset)
+#' coocc (dataset, "DIALECT.L2")
+#' round (coocc(dataset,"DIALECT.L2",count="r"), digits=3)
 
-char2value <- function (data, language, x)
-	UseMethod ("char2value")
+coocc <- function (data, column, count, unit)
+	UseMethod ("coocc")
 
 #' @export
-char2value.default <- function (data, language, x)
+coocc.default <- function (data, column, count, unit)
 	stop ("This function does not know how to handle an object of class \"",class(data),"\".")
 
 #' @export
-char2value.soundcorrs <- function (data, language, x) {
+coocc.soundcorrs <- function (data, column=NULL, count="a", unit="w") {
 
-	# convert language to number, maybe
-	if (typeof(language) == "character")
-		language <- which (data$names == language)
+	# check the remaining args
+	if (!is.null(column) && column %nin% colnames(data$data))
+		stop ("Column \"", column, "\" missing from \"data\".")
+	count <- checkCount (count)
+	unit <- checkUnit (unit)
 
-	# make sure the data contain the language
-	if (length(language)==0 || language>length(data$names))
-		stop ("The specified \"language\" is missing from \"", substitute(data), "\".")
+	# prep vars
+	tmp <- lapply (data$segms, `[[`, "z")
 
-	# do the conversion
-	res <- data$trans[[language]]$data [x, data$trans[[language]]$cols$value]
+	# as a side effect, this fills in the missing NAs
+	tmp <- lapply (list.transpose(tmp), list.transpose)
 
-	# and return
+	# convert to characters
+	tmp <- rapply (tmp, collapse, inter="_", how="replace")
+
+	# find the combinations
+	rows <- cols <- c ()
+	for (i in seq_along(tmp)) {
+
+		# corr-to-corr
+		if (is.null(column) && length(tmp[[i]])>1) {
+			# combinations without repetition
+			tmp2 <- combn (tmp[[i]], 2)
+			# fill both triangles of the table (permutations)
+			tmp2 <- cbind (tmp2, tmp2[2:1,])
+			# remove duplicates, maybe
+			if (unit=="w") tmp2<-t(unique(t(tmp2)))
+			# separate into rows and cols
+			rows <- c (rows, unlist(tmp2[1,]))
+			cols <- c (cols, unlist(tmp2[2,]))
+
+		# corr-to-column
+		} else if (!is.null(column)) {
+			# permutations with repetition
+			tmp2 <- expand.grid (tmp[[i]], data$data[i,column])
+			# remove duplicates, maybe
+			if (unit=="w") tmp2<-unique(tmp2)
+			# prepare for tabling
+			rows <- c (rows, unlist(tmp2$Var1))
+			cols <- c (cols, as.vector(tmp2$Var2))
+		}
+
+	}
+
+	# make the table
+	res <- table (rows, cols, useNA="ifany")
+
+	# fix the names
+	names(dimnames(res)) <-
+		if (is.null(column))
+			rep (collapse(data$names,inter="_"), 2)
+		else
+			c (collapse(data$names,inter="_"), column)
+
+	# convert to relative, maybe
+	if (count == "r")
+		res <- tabAbs2Rel (res, column)
+
+	# return the result
 	return (res)
 
 }
 
 # -------------------------------------------------------------------------------------------------- >>> -
-# - exp findPairs.soundcorrs ----------------------------------------------------------------------- <<< -
+# - exp findExamples.soundcorrs -------------------------------------------------------------------- <<< -
 
-#' @title Find all pairs with corresponding sequences of sounds.
-#' @description Sift the dataset for word pairs such that the first word contains \code{x} and the second word contains \code{y} in the corresponding segment or segments.
-#' @param data [soundcorrs] The dataset in which to look. Only datasets with two languages are supported.
-#' @param x [character] The sequence to find in language1. May be a regular expression. If an empty string, anything will be considered a match.
-#' @param y [character] The sequence to find in language2. May be a regular expression. If an empty string, anything will be considered a match.
-#' @param exact [logical] Only return exact, full-segment to full-segment matches? If \code{TRUE}, linguistic zeros are not ignored. Defaults to \code{FALSE}.
+#' @title Find all pairs/triples/... with corresponding sequences of sounds.
+#' @description Sift the dataset for word pairs/triples/... such that the first word in the first languages contains the first sequence, the one in the second language the second sequence, and so on.
+#' @param data [soundcorrs] The dataset in which to look.
+#' @param ... [character] Sequences for which to look. May be regular expressions as defined in R, or in the \code{\link{transcription}}. If an empty string, anything will be considered a match.
+#' @param distance.start [integer] The allowed distance between segments where the sound sequences begin. A negative value means alignment of the beginning of sequences will not be checked. Defaults to -1.
+#' @param distance.end [integer] The allowed distance between segments where the sound sequences end. A negative value means alignment of the end of sequences will not be checked. Defaults to -1.
+#' @param na.value [numeric] Treat \code{NA}’s as matches (\code{0}) or non-matches (\code{-1})? Defaults to \code{0}.
+#' @param zeros [logical] Take linguistic zeros into account? Defaults to \code{FALSE}.
 #' @param cols [character vector] Which columns of the dataset to return as the result. Can be a vector of names, \code{"aligned"} (the two columns with segmented, aligned words), or \code{"all"} (all columns). Defaults to \code{"aligned"}.
-#' @return [df.findPairs] A subset of the dataset, containing only the pairs with corresponding sequences. Warning: pairs with multiple occurrences of such sequences are only included once.
+#' @return [df.findExamples] A list with two fields: \code{$data}, a data frame with found examples; and \code{$which}, a logical vector showing which rows of \code{data} are considered matches.
+#' @seealso \code{\link{findPairs}}.
 #' @export
+#' @importFrom utils combn
 #' @examples
 #' # In the examples below, non-ASCII characters had to be escaped for technical reasons.
-#' # In actual usage, all soundcorrs functions accept characters from beyond ASCII.
+#' # In the actual usage, Unicode is supported under BSD, Linux, and macOS.
 #' dataset <- sampleSoundCorrsData.capitals
-#' findPairs (dataset, "\u00E4", "e", cols=c("ORTHOGRAPHY.German","ORTHOGRAPHY.Polish"))  # a-diaeresis
-#' findPairs (dataset, "a", "[ae]", cols="all")
-#' findPairs (dataset, "\u0259", "Vr", exact=FALSE)  # schwa
-#' findPairs (dataset, "\u0259", "Vr", exact=TRUE)  # schwa
-#' subset (dataset, findPairs(dataset, "\u00E4", "e")$which)  # a-diaeresis
+#' # Find examples which have "a" in all three languages.
+#' findExamples (dataset, "a", "a", "a")
+#' # Find examples where German has schwa, and Polish and Spanish have a Vr sequence.
+#' findExamples (dataset, "\u0259", "Vr", "Vr")
+#' # Find examples where German has a-umlaut, Polish has a or e, and Spanish has any sound at all.
+#' findExamples (dataset, "\u00E4", "[ae]", "")
+#' # Find examples where German has a linguistic zero while Polish and Spanish do not.
+#' findExamples (dataset, "-", "[^-]", "[^-]", zeros=TRUE)
+#' # Find examples where German has schwa, and Polish and Spanish have a.
+#' findExamples (dataset, "\u0259", "a", "a", distance.start=-1, distance.end=-1)
+#' # As above, but the schwa and the two a's must be in the same segment.
+#' findExamples (dataset, "\u0259", "a", "a", distance.start=0, distance.end=0)
 
-findPairs <- function (data, x, y, exact, cols)
-	UseMethod ("findPairs")
+findExamples <- function (data, ..., distance.start, distance.end, na.value, zeros, cols)
+	UseMethod ("findExamples")
 
 #' @export
-findPairs.default <- function (data, x, y, exact, cols)
+findExamples.default <- function (data, ..., distance.start, distance.end, na.value, zeros, cols)
 	stop ("This function does not know how to handle an object of class \"",class(data),"\".")
 
 #' @export
-findPairs.soundcorrs <- function (data, x, y, exact=F, cols="aligned") {
+findExamples.soundcorrs <-
+	function (data, ..., distance.start=-1, distance.end=-1, na.value=0, zeros=F, cols="aligned") {
 
+# - sift - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - <<< -
 
-# - is.entireSegm - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -<<< -
-
-	is.entireSegm <- function (start, end, segpos) (
-
-		# starts at the beginning of a segment
-		(start==1 || segpos[start-1] < segpos[start])
-
-		# ends at the end of a segment
-		& (end==length(segpos) || segpos[end+1] > segpos[end])
-
-	)
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ->>> -
-# - list2df - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -<<< -
-
-	list2df <- function (data, segpos) {
-
-		# which results are we even interested in
-		nums <- which (unlist(data)!=-1)
-
-		# like segpos, just for entries
-		tmp <- unlist (lapply (data, length))
-		entries <- unlist (mapply (rep, 1:length(tmp), tmp)) [nums]
-
-		# now the starts and the ends, in characters
-		starts.ch <- unlist (data) [nums]
-		tmp <- unlist (lapply (data, attr, "match.length"))
-		ends.ch <- starts.ch + tmp[nums] - 1
-
-		# if x or y == 0, some ends.ch end up being 0
-		tmp <- which (ends.ch < starts.ch)
-		ends.ch[tmp] <- starts.ch[tmp]
-
-		# convert characters to segments
-		starts.sg <- mapply (function(i,ii) segpos[[i]][ii], entries, starts.ch)
-		ends.sg <- mapply (function(i,ii) segpos[[i]][ii], entries, ends.ch)
-
+	sift <- function (x, s, dist) {
+		# prepare vars
+		tmp <- unlist (s)
+		full <- if (all(is.na(tmp)) || max(tmp,na.rm=T)==0) 0 else seq(tmp)
+		# convert to segpos
+		xs <- mapply (function (x2,s2) {
+			if (x2[1]==-1)		-1			# non-matches remain non-matches
+			else if (x2[1]==0)	full		# 0 are catch-alls
+			else				s2[x2]		# everyone else gets converted to segpos
+		}, x, s, SIMPLIFY=F)
+		# find all the combinations
+		xs <- expand.grid (xs)
+		# remove useless rows
+		xs <- xs [apply(xs, 1, function(y) all(y!=-1)), , drop=F]
+		# don't bother if there are no matches
+		if (nrow(xs)==0) return(FALSE)
+		# check pairwise distances
+		if (dist>=0 & ncol(xs)>1) {
+			xs <- rbind (combn(ncol(xs), 2, function(y) abs(xs[,y[1]]-xs[,y[2]])))
+			xs <- xs [apply(xs, 1, function(y) all(y<=dist)),,drop=F]
+		}
 		# return the result
-		return (data.frame (ENTRY=entries,
-							START.CH=starts.ch, END.CH=ends.ch,
-							START.SG=starts.sg, END.SG=ends.sg))
-
+		if (nrow(xs)==0) return(FALSE) else return(TRUE)
 	}
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ->>> -
 
-	# check exactly two languages
-	if (length(data$names) != 2)
-		warning ("This function only supports two languages. The search is limited to ", data$names[1], " and ", data$names[2], ".")
+	# unpack args
+	quer <- c (...)
+
+	# check args
+	if (class(data) != "soundcorrs")
+		stop ("\"data\" must be of class \"soundcorrs\".")
+	if (any(lapply(quer,class) != "character"))
+		stop ("Queries must be character strings.")
+	if (any(is.na(quer) | is.nan(unlist(quer)) | is.null(quer)))
+		stop ("Queries cannot be NA, NaN, or NULL.")
+	if (length(quer) != length(data$names))
+		stop ("There must be as many queries as there are languages in \"data\".")
+	if (class(na.value) != "numeric" | na.value %nin% c(-1,0))
+		stop ("\"na.value\" must be eithe -1 or 0.")
+	if (class(zeros) != "logical")
+		stop ("\"zeros\" must be either \"TRUE\" or \"FALSE\".")
+	if (class(cols) != "character")
+		stop ("\"cols\" must be a character string or strings.")
 
 	# convert cols if necessary
 	if (cols[1] == "all")
@@ -1702,118 +1564,40 @@ findPairs.soundcorrs <- function (data, x, y, exact=F, cols="aligned") {
 
 	# check column names ok
 	if (any(cols %nin% colnames(data$data)))
-		stop ("One or more column names are missing from \"",substitute(data),"\".")
+		stop ("One or more column names are missing from \"data\".")
 
-	# some convenience variables
-	tmp <- if (exact) "z" else "nz"
-	segpos <- lapply (data$segpos, `[[`, tmp) [c(1,2)]
-	words <- lapply (data$words, `[[`, tmp) [c(1,2)]
+	# convenience vars
+	segpos <- lapply (data$segpos, `[[`, if (zeros) "z" else "nz")
+	trans <- data$trans
+	words <- lapply (data$words, `[[`, if (zeros) "z" else "nz")
 
-	# expand metacharacters in x and y
-	expanded <- mapply (expandMeta, data$trans[c(1,2)], list(x,y))
+	# expand metacharacters in queries
+	expanded <- mapply (expandMeta, trans, quer)
 
-	# find the expanded x and y
-	founds <- mapply (gregexpr, expanded, words, SIMPLIFY=F)
+	# find the starts of matches
+	starts <- mapply (gregexpr, expanded, words, SIMPLIFY=F)
 
-	# convert the finds to a saner format and merge them
-	if (x == "")
-		found <- merge (list2df(founds[[2]],segpos[[2]]), list2df(founds[[2]],segpos[[2]]), by="ENTRY")
-	else if (y == "")
-		found <- merge (list2df(founds[[1]],segpos[[1]]), list2df(founds[[1]],segpos[[1]]), by="ENTRY")
-	else
-		found <- merge (list2df(founds[[1]],segpos[[1]]), list2df(founds[[2]],segpos[[2]]), by="ENTRY")
+	# fix empty strings and NAs
+	starts[quer==""] <- rapply (starts[quer==""], function(...) 0, how="replace")
+	starts <- rapply (starts, function(x) if (is.na(x[1])) na.value else x, how="replace")
 
-	# sift the matches
-	sifted <- apply (found, 1, function (n)
-		if (exact) (
-			# occupies the same segment
-			abs (n["START.SG.x"]-n["START.SG.y"]) == 0
-			& abs (n["END.SG.x"]-n["END.SG.y"]) == 0
-			# and it is the entire segment (or empty string, meaning anything goes)
-			& (x=="" | is.entireSegm (n["START.CH.x"], n["END.CH.x"], segpos[[1]][[n["ENTRY"]]]))
-			& (y=="" | is.entireSegm (n["START.CH.y"], n["END.CH.y"], segpos[[2]][[n["ENTRY"]]]))
-		) else (
-			# occupies the same segment, or one to the left or right
-			abs (n["START.SG.x"]-n["START.SG.y"]) <= 1
-			& abs (n["END.SG.x"]-n["END.SG.y"]) <= 1
-		)
-	)
-	nums <- unique (found [which(sifted), "ENTRY"])
+	# find the ends of matches
+	ends <- rapply (starts, function (x)
+		if (x[1] %in% c(-1,0)) x else
+			x + attr(x,"match.length") - (attr(x,"match.length")[1]!=0)
+	, how="replace")
 
-	# return the result, as "df.findPairs" for prettier printing, for findSegments() and for subset()
-	res <- list (
-		data = data$data [nums, cols, drop=F],
-		found = found [sifted, ],
-		which = unlist (lapply (seq_len(nrow(data$data)), function(i) i %in% nums))
-	)
-	class(res) <- "df.findPairs"
-	return (res)
-
-}
-
-# -------------------------------------------------------------------------------------------------- >>> -
-# - exp findSegments.soundcorrs -------------------------------------------------------------------- <<< -
-
-#' @title Segments in relation to segments exhibiting a correspondence.
-#' @description Find pairs with a specific sound correspondence, and extract from them the segments which come before or after the segments exhibiting that correspondence.
-#' @param data [soundcorrs] The dataset in which to look. Only datasets with two languages are supported.
-#' @param x [character] The sequence to find in language1. May be a regular expression. If an empty string, anything will be considered a match.
-#' @param y [character] The sequence to find in language2. May be a regular expression. If an empty string, anything will be considered a match.
-#' @param segment [integer] Number of the segment to be returned, in relation to segments containing \code{x} and \code{y}. Defaults to 0.
-#' @return [list] Vectors for both languages, each of the same length as the dataset.
-#' @export
-#' @examples
-#' # In the examples below, non-ASCII characters had to be escaped for technical reasons.
-#' # In actual usage, all soundcorrs functions accept characters from beyond ASCII.
-#' dataset <- sampleSoundCorrsData.capitals
-#' findPairs (dataset, "\u00E4", "e")  # a-diaeresis
-#' findSegments (dataset, "\u00E4", "e")
-#' findSegments (dataset, "\u00E4", "e", -1)
-
-findSegments <- function (data, x, y, segment)
-	UseMethod ("findSegments")
-
-#' @export
-findSegments.default <- function (data, x, y, segment)
-	stop ("This function does not know how to handle an object of class \"",class(data),"\".")
-
-#' @export
-findSegments.soundcorrs <- function (data, x, y, segment=0) {
-
-	# check exactly two languages
-	if (length(data$names) != 2)
-		warning ("This function only supports two languages. The search is limited to ", data$names[1], " and ", data$names[2], ".")
-
-	# make sure findPairs doesn't warn about >2 languages again
-	suppressWarnings (
-
-	# sift the dataset
-	found <- findPairs (data, x, y, exact=T, cols="aligned") $found
-
-	# turn on warnings back again
-	)
-
-	# which segment are we looking for
-	# findPairs() had exact=T, so xs and ys must be the same
-	target <- if (segment>=0) found$END.SG.x+segment else found$START.SG.x+segment
-
-	# in which words does this segment even exist
-	tmp <- unlist (lapply (data$segms[[1]]$z[found$ENTRY], length))
-	nums <- which (target>0 & target<=tmp)
-	entries <- found [nums, "ENTRY"]
+	# sift for distances
+	tmp <- list.transpose (segpos)
+	starts <- mapply (sift, list.transpose(starts), tmp, MoreArgs=list(distance.start))
+	ends <- mapply (sift, list.transpose(ends), tmp, MoreArgs=list(distance.end))
 
 	# prepare the result
-	res.x <- res.y <- rep (NA, length(data$segms[[1]]$z))
-
-	# and fill it with target segments
-	for (i in unique(entries)) {
-		res.x[i] <- collapse (data$segms[[1]]$z [[i]] [target[which(entries==i)]], inter=",")
-		res.y[i] <- collapse (data$segms[[2]]$z [[i]] [target[which(entries==i)]], inter=",")
-	}
-
-	# prettify the result
-	res <- list (res.x, res.y)
-	names(res) <- data$names[c(1,2)]
+	res <- list (
+		data = data$data [starts & ends, cols, drop=F],
+		which = starts & ends
+	)
+	class(res) <- "df.findExamples"
 
 	# and return it
 	return (res)
@@ -1821,18 +1605,143 @@ findSegments.soundcorrs <- function (data, x, y, segment=0) {
 }
 
 # -------------------------------------------------------------------------------------------------- >>> -
-# - exp print.df.findPairs ------------------------------------------------------------------------- <<< -
+# - exp findPairs.soundcorrs ----------------------------------------------------------------------- <<< -
 
-#' @title Pretty printing for the result of \code{\link{findPairs}}.
-#' @param x [df.findPairs] The output of \code{\link{findPairs}}.
+#' @title A convenience wrapper around \code{\link{findExamples}}.
+#' @description Sift the dataset for word pairs such that the first word contains \code{x} and the second word contains \code{y} in the corresponding segment or segments.
+#' @param data [soundcorrs] The dataset in which to look. Only datasets with two languages are supported.
+#' @param x [character] The sequence to find in language1. May be a regular expression. If an empty string, anything will be considered a match.
+#' @param y [character] The sequence to find in language2. May be a regular expression. If an empty string, anything will be considered a match.
+#' @param exact [numeric] If 0 or \code{FALSE}, \code{distance.start}=\code{distance.end}=-1, \code{na.value}=0, and \code{zeros}=\code{FALSE}. If 0.5, \code{distance.start}=\code{distance.end}=1, \code{na.value}=0, and \code{zeros}=\code{FALSE}. If 1 or \code{TRUE}, \code{distance.start}=\code{distance.end}=0, \code{na.value}=-1, and \code{zeros}=\code{TRUE}. Defaults to 0.
+#' @param cols [character vector] Which columns of the dataset to return as the result. Can be a vector of names, \code{"aligned"} (the two columns with segmented, aligned words), or \code{"all"} (all columns). Defaults to \code{"aligned"}.
+#' @return [df.findExamples] A subset of the dataset, containing only the pairs with corresponding sequences. Warning: pairs with multiple occurrences of such sequences are only included once.
+#' @seealso \code{\link{findExamples}}, \code{\link{allPairs}}.
+#' @export
+#' @examples
+#' # In the examples below, non-ASCII characters had to be escaped for technical reasons.
+#' # In the actual usage, Unicode is supported under BSD, Linux, and macOS.
+#' dataset <- sampleSoundCorrsData.capitals
+
+findPairs <- function (data, x, y, exact, cols)
+	UseMethod ("findPairs")
+
+#' @export
+findPairs.default <- function (data, x, y, exact, cols)
+	stop ("This function does not know how to handle an object of class \"",class(data),"\".")
+
+#' @export
+findPairs.soundcorrs <- function (data, x, y, exact=0, cols="aligned") {
+
+	# check args
+	if (length(data$names) != 2)
+		stop ("This function only supports two languages. Please use \"findExamples()\" instead.")
+
+	# prepare vars
+	if (exact == 0) {
+		dist <- -1
+		nas <- 0
+		zers <- F
+	} else if (exact == 0.5) {
+		dist <- 1
+		nas <- 0
+		zers <- F
+	} else if (exact == 1) {
+		dist <- 0
+		nas <- -1
+		zers <- T
+	} else {
+		stop ("\"exact\" must be 0, 0.5, 1, TRUE, or FALSE.")
+	}
+
+	# do the search
+	res <- findExamples (data, x, y, distance.start=dist, distance.end=dist, na.value=nas, zeros=zers, cols=cols)
+
+	# return the result
+	return (res)
+
+
+}
+
+# -------------------------------------------------------------------------------------------------- >>> -
+# - exp merge.soundcorrs --------------------------------------------------------------------------- <<< -
+
+#' @title Merge two or more \code{\link{soundcorrs}} objects.
+#' @description Take multiple \code{\link{soundcorrs}} objects and combine them into one.
+#' @param ... [soundcorrs] Objects to be merged.
+#' @return [soundcorrs] The single, merged object.
+#' @export
+#' @examples
+#' # path to sample data in the "wide format"
+#' fNameData <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
+#' # path to a sample transcription
+#' fNameTrans <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
+#' ger <- read.soundcorrs (fNameData, "German", "ALIGNED.German", fNameTrans)
+#' pol <- read.soundcorrs (fNameData, "Polish", "ALIGNED.Polish", fNameTrans)
+#' merge (ger, pol)
+
+
+merge.soundcorrs <- function (...) {
+
+	# prepare args
+	ones <- list (...)
+
+	# check args
+	if (length(ones) < 2)
+		stop ("At least two \"soundcorrs\" objects are required.")
+	if (any(sapply(ones,class) != "soundcorrs"))
+		stop ("All arguments must be of class \"soundcorrs\".")
+
+	# check all have the same nr of entries
+	if (length(unique(sapply(ones, function(x) nrow(x$data)))) != 1)
+		stop ("Differing number of entries between the specified objects.")
+
+	# check segments align
+	tmp <- unlist (lapply(ones,`[[`,"segms"), recursive=F)
+	tmp <- lapply (tmp, `[[`, "z")
+	tmp <- rapply (tmp, function(x) if (is.na(x[1])) NA else length(x))
+	tmp <- matrix (tmp, ncol=length(unlist(lapply(ones,`[[`,"names"))))
+	tmp <- apply (tmp, 1, function(x) length(unique(x[!is.na(x)]))<=1)
+	tmp <- which (!tmp)
+	if (length(tmp) > 0)
+		stop ("Differing number of segments in entries: ", collapse(tmp,inter=", "), ".")
+
+	# merge the data frames
+	data <- Reduce (function (x, y)
+		if (length(intersect(names(x),names(y)))==0) cbind(x,y) else merge(x,y,all=T,sort=F),
+		lapply(ones, `[[`, "data"))
+	if (nrow(data) != nrow(ones[[1]]$data))		# we've checked all have the same nr of rows
+		stop ("Incompatible datasets. Perhaps conflicting column names or duplicate rows?")
+
+	# wrap into an object
+	res <- list (
+		cols = unlist (lapply (ones, `[[`, "cols"), recursive=F),
+		data = data,
+		names = unlist (lapply (ones, `[[`, "names")),
+		segms = unlist (lapply (ones, `[[`, "segms"), recursive=F),
+		segpos = unlist (lapply (ones, `[[`, "segpos"), recursive=F),
+		separators = unlist (lapply (ones, `[[`, "separators")),
+		trans = unlist (lapply (ones, `[[`, "trans"), recursive=F),
+		words = unlist (lapply (ones, `[[`, "words"), recursive=F)
+	)
+	class(res) <- "soundcorrs"
+
+	# return the result
+	return (res)
+
+}
+# -------------------------------------------------------------------------------------------------- >>> -
+# - exp print.df.findExamples ---------------------------------------------------------------------- <<< -
+
+#' @title Pretty printing for the result of \code{\link{findExamples}}.
+#' @param x [df.findExamples] The output of \code{\link{findExamples}}.
 #' @param ... Unused; only for consistency with \code{\link{print}}.
 #' @return A more human-friendly digest.
 #' @export
 #' @examples
 #' dataset <- sampleSoundCorrsData.capitals
-#' findPairs (dataset, "a", "[ae]", cols="all")
+#' findExamples (dataset, "a", "a", "a", cols="all")
 
-print.df.findPairs <- function (x, ...) {
+print.df.findExamples <- function (x, ...) {
 
 	# do the printing
 	if (nrow(x$data) > 0)
@@ -1862,13 +1771,53 @@ print.soundcorrs <- function (x, ...) {
 
 	# print the data
 	cat ("A \"soundcorrs\" object.\n")
-	cat (paste0("  Languages: (", length(x$names), "): ", collapse(x$names, inter=", "), ".\n"))
+	cat (paste0("  Languages (", length(x$names), "): ", collapse(x$names, inter=", "), ".\n"))
 	cat (paste0("  Entries: ", nrow(x$data), ".\n"))
 	cat (paste0("  Columns (", ncol(x$data), "): ", collapse(colnames(x$data),inter=", "), ".\n"))
 	cat ("\n")
 
 	# and return it under the counter
 	invisible (x)
+
+}
+
+# -------------------------------------------------------------------------------------------------- >>> -
+# - exp read.soundcorrs ---------------------------------------------------------------------------- <<< -
+
+#' @title Read data for a single language from a tsv file.
+#' @description Read the data for one language, from a file in the wide format, and combine it with metadata into a \code{\link{soundcorrs}} object. To obtain a \code{soundcorrs} object containing data for multiple languages, see \code{\link{merge.soundcorrs}}.
+#' @param file [character] Path to the data file in the wide format.
+#' @param name [character] Name of the language.
+#' @param col.aligned [character] Name of the column with the aligned words.
+#' @param transcription [character] Path to the file with the transcription.
+#' @param separator [character] String used to separate segments in \code{col.aligned}. Defaults to \code{"\\|"}.
+#' @return [scOne] An object containing the data and metadata for one language.
+#' @export
+#' @importFrom utils read.table
+#' @examples
+#' # path to sample data in the "wide format"
+#' fNameData <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
+#' # path to a sample transcription
+#' fNameTrans <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
+#' ger <- read.soundcorrs (fNameData, "German", "ALIGNED.German", fNameTrans)
+
+read.soundcorrs <- function (file, name, col.aligned, transcription, separator="\\|") {
+
+	# check args
+	tmp <- list (file=file, name=name, col.aligned=col.aligned, transcription=transcription, separator=separator)
+	err <- which (lapply(tmp,class) != "character")
+	if (length(err) > 0)
+		stop ("\"", names(tmp)[err[1]], "\" must be a character string.")
+
+	# read in the data
+	data <- read.table (file, header=T, stringsAsFactors=F, quote="")
+
+	# pack data into an object
+	res <- soundcorrs (data, name, col.aligned, read.transcription(transcription), separator)
+	attr(res,"file") <- file
+
+	# return the result
+	return (res)
 
 }
 
@@ -1888,7 +1837,7 @@ print.soundcorrs <- function (x, ...) {
 #' dataset <- sampleSoundCorrsData.capitals
 #' subset (dataset, OFFICIAL.LANGUAGE=="German")
 #' subset (dataset, grepl("German",OFFICIAL.LANGUAGE))
-#' subset (dataset, findPairs(dataset, "\u00E4", "e")$which)  # a-diaeresis
+#' subset (dataset, findExamples(dataset, "\u00E4", "e", "")$which)  # a-diaeresis
 
 subset.soundcorrs <- function (x, condition, ...) {
 
@@ -1914,113 +1863,47 @@ subset.soundcorrs <- function (x, condition, ...) {
 #' @title Generate a segment-to-segment contingency table for two languages.
 #' @description Produce a contingency table detailing all segment-to-segment correspondences in a dataset.
 #' @param object [soundcorrs] The dataset from which to draw frequencies. Only datasets with two languages are supported.
-#' @param count [character] Report the absolute number of times or words, or relative to how many times or in how many words the given segments co-occur in L1 or L2. Accepted values are \code{"a(bs(olute))"} and \code{"r(el(ative))"}. Defaults to "a".
+#' @param count [character] Report either the absolute number of times or words, or relative to how many times or in how many words the given segments correspond to each other. Accepted values are \code{"a(bs(olute))"} and \code{"r(el(ative))"}. Defaults to "a".
 #' @param unit [character] Count how many times a correspondence occurs or in how many words it occurs. Accepted values are \code{"o(cc(ur(ence(s))))"} and \code{"w(or(d(s)))"}. Defaults to \code{"w"}.
-#' @param direction [integer] If \code{1}, correspondences are in the order Language1 > Language2 ("x yields y"). If \code{2}, the order is Language2 < Language1 ("y originates from x"). Defaults to \code{1}.
 #' @param ... Unused; only for consistency with \code{\link{print}}.
-#' @return [table] The contingency table.
+#' @return [table] The contingency table. The values represent how often the given segments correspond to each other, not how often they co-occur in the same word (cf. \code{\link{coocc}}).
+#' @seealso \code{\link{coocc}}.
 #' @export
 #' @examples
 #' dataset <- sampleSoundCorrsData.abc
 #' summary (dataset)
 #' round (summary(dataset,count="r"), digits=3)
 #' summary (dataset, unit="o")
-#' summary (dataset, direction=2)
 
-summary.soundcorrs <- function (object, count="a", unit="w", direction=1, ...) {
+summary.soundcorrs <- function (object, count="a", unit="w", ...) {
 
-	# check exactly two languages
-	if (length(object$names) != 2)
-		warning ("This function only supports two languages. The search is limited to ", object$names[1], " and ", object$names[2], ".")
-
-	# check the remaining args
+	# check args
 	count <- checkCount (count)
 	unit <- checkUnit (unit)
-	if (direction %nin% c(1,2))
-		stop ("\"direction\" must be either 1 or 2.")
 
-	# look one way or the other
-	if (direction == 1) {
-		res <- tableTwo (object$segms[[1]]$z, object$segms[[2]]$z, unit)
-		names(dimnames(res)) <- object$names[c(1,2)]
-	} else {
-		res <- tableTwo (object$segms[[2]]$z, object$segms[[1]]$z, unit)
-		names(dimnames(res)) <- rev (object$names[c(1,2)])
-	}
+	# extract the segments
+	tmp <- lapply (object$segms, `[[`, "z")
+
+	# as a side effect, this fills in the missing NAs
+	tmp <- lapply (list.transpose(tmp), list.transpose)
+
+	# remove duplicates, maybe
+	if (unit == "w")
+		tmp <- lapply (tmp, unique)
+
+	# reformat back
+	tmp <- list.transpose (lapply(tmp,list.transpose))
+	tmp <- lapply (tmp, unlist)
+
+	# make the table
+	res <- table (tmp, useNA="ifany")
+
+	# fix the names
+	names(dimnames(res)) <- object$names
 
 	# convert to relative, maybe
 	if (count == "r")
 		res <- tabAbs2Rel (res, "")
-
-	# return the result
-	return (res)
-
-}
-
-# -------------------------------------------------------------------------------------------------- >>> -
-# - exp table.soundcorrs --------------------------------------------------------------------------- <<< -
-
-#' The base::\code{\link{table}} function.
-#' @param ... base::\code{\link{table}}'s arguments.
-#' @export
-table <- function (...)
-	UseMethod ("table")
-
-#' @export
-table.default <- function (...)
-	base::table (...)
-
-#' @title Generate a correspondence-to-correspondence or correspondence-to-metadata contingency table.
-#' @description Take all segment-to-segment correspondences in a dataset, and cross-tabulate them with themselves or with metadata taken from a separate column.
-#' @param data [soundcorrs] The dataset from which to draw frequencies. Only datasets with two languages are supported.
-#' @param column [character] Name of the column with metadata. If \code{NULL}, sound correspondences are cross-tabulated with themselves. Defaults to \code{NULL}.
-#' @param count [character] Report the absolute number of times or words, or relative to how many times or in how many words the given segments co-occur in L1 or L2. Accepted values are \code{"a(bs(olute))"} and \code{"r(el(ative))"}. Defaults to "a".
-#' @param unit [character] Count how many times a correspondence occurs or in how many words it occurs. Accepted values are \code{"o(cc(ur(ence(s))))"} and \code{"w(or(d(s)))"}. Defaults to \code{"w"}.
-#' @param direction [integer] If \code{1}, correspondences are in the order Language1 > Language2 ("x yields y"). If \code{2}, the order is Language2 < Language1 ("y originates from x"). Defaults to \code{1}.
-#' @param ... Unused; only for consistency with \code{\link{table}}.
-#' @return [table] The contingency table.
-#' @export
-#' @examples
-#' dataset <- sampleSoundCorrsData.abc
-#' table (dataset)
-#' table (dataset, direction=2)
-#' table (dataset, "DIALECT.L2")
-#' round (table(dataset,"DIALECT.L2",count="r"), digits=3)
-
-table.soundcorrs <- function (data, column=NULL, count="a", unit="w", direction=1, ...) {
-
-	# check exactly two languages
-	if (length(data$names) != 2)
-		warning ("This function only supports two languages. The search is limited to ", data$names[1], " and ", data$names[2], ".")
-
-	# check the remaining args
-	count <- checkCount (count)
-	unit <- checkUnit (unit)
-	if (direction %nin% c(1,2))
-		stop ("\"direction\" must be either 1 or 2.")
-
-	# prepare the rows (correllations)
-	if (direction == 1)
-		rows <- mapply (function(x,y) paste0(x,"_",y), data$segms[[1]]$z, data$segms[[2]]$z, SIMPLIFY=T)
-	else
-		rows <- mapply (function(x,y) paste0(x,"_",y), data$segms[[2]]$z, data$segms[[1]]$z, SIMPLIFY=T)
-
-	# prepare the cols (correllations or metadata)
-	if (is.null(column))
-		cols <- rows
-	else
-		cols <- mapply (rep, data$data[,column], lapply(rows,length), SIMPLIFY=F)
-
-	# and make a table out of them
-	res <- if (identical(rows,cols)) tableOne(rows,unit) else tableTwo(rows,cols,unit)
-
-	# fix the names
-	tmp <- if (direction==1) collapse(data$names[c(1,2)],inter="\u2192") else collapse(rev(data$names[c(1,2)]),inter="\u2190")
-	names(dimnames(res)) <- if (is.null(column)) c(tmp,tmp) else c(tmp,column)
-
-	# convert to relative, maybe
-	if (count == "r")
-		res <- tabAbs2Rel (res, column)
 
 	# return the result
 	return (res)
@@ -2035,7 +1918,7 @@ table.soundcorrs <- function (data, column=NULL, count="a", unit="w", direction=
 # - exp transcription ------------------------------------------------------------------------------ <<< -
 
 #' @title Constructor function for the \code{transcription} class.
-#' @description Take a data frame containing transcription and turn it into a \code{transcription} object, as required by the \code{\link{soundcorrs}} constructor function. In a normal workflow, the user should have no need to call this function other than through \code{\link{read.transcription}}.
+#' @description Take a data frame containing transcription and turn it into a \code{transcription} object, as required by the \code{\link{soundcorrs}} constructor function. In the normal workflow, the user should have no need to call this function other than through \code{\link{read.transcription}}.
 #' @param data [data.frame] Data frame containing the transcription and its meaning.
 #' @param col.grapheme [character] Name of the column with graphemes. Defaults to \code{"GRAPHEME"}.
 #' @param col.meta [character] Name of the column with the coverage of metacharacters. If empty string or \code{NA}, the column will be generated automatically. Defaults to \code{"META"}.
@@ -2052,27 +1935,50 @@ table.soundcorrs <- function (data, column=NULL, count="a", unit="w", direction=
 
 transcription <- function (data, col.grapheme="GRAPHEME", col.meta="META", col.value="VALUE") {
 
-	# check column names
-	tmp <- c(col.grapheme,col.value)
-	if (any(is.na(tmp) | tmp==""))
-		stop ("Column names cannot be empty strings or NA.")
-	if (any(tmp %nin% colnames(data)))
-		stop ("One or more column names are missing from \"",substitute(data),"\".")
+	# check the args
+	tmp <- c (col.grapheme, col.meta, col.value)
+	if (any(tmp=="" | is.na(tmp) | is.nan(tmp) | is.null(tmp)))
+		stop ("Column names cannot be empty strings, NA, NaN, or NULL.")
 
-	# check for multiple definitions
+	# check column names
+	tmp <- c (col.grapheme, col.value)
+	if (any(tmp %nin% colnames(data)))
+		stop ("One or more column names are missing from \"data\".")
+
+	# check for empty strings, nas, nans, and nulls
+	tmp <- data [, col.grapheme]
+	if (any(tmp=="" | is.na(tmp) | is.nan(tmp) | is.null(tmp)))
+		stop ("Graphemes cannot be empty strings, NA, NaN, or NULL.")
+
+	# check for duplicated graphemes
 	tmp <- unique (data [duplicated(data[,col.grapheme]), col.grapheme])
-	if (length(tmp)>0)
-		stop ("Multiple definitions for graphemes: ",collapse(tmp,inter=", "),".")
-	rownames(data) <- data[,col.grapheme]
+	if (length(tmp) > 0)
+		stop ("Multiple definitions for graphemes: ", collapse(tmp,inter=", "), ".")
+
+	# check for duplicated definitions
+	tmp <- strsplit (data[,col.value], ",")
+	tmp <- lapply (tmp, sort)
+	tmp <- unique (tmp[duplicated(tmp)])
+	if (length(tmp) > 0) {
+		t <- lapply (tmp, function(y) paste0("[",collapse(y,inter=","),"]"))
+		warning ("Multiple graphemes for values: ", collapse(t,inter=", "), ".")
+	}
 
 	# check for eregexp metacharacters
-	tmp <- collapse (data[,col.grapheme])		# roundabout, but needed to find metas in >1-character graphemes
-	meta <- gregexpr ("[][\\(\\)\\{\\}\\.\\+\\*\\^\\\\\\$\\?\\|]", tmp)[[1]]
-	if (meta != -1) {
-		tmp2 <- strsplit (tmp, "")[[1]] [meta]
-		tmp2 <- collapse (sort(unique(tmp2)), inter=", ")
-		stop ("Extended regular expressions metacharacters are used as graphemes: ", tmp2, ".")
+	tmp <- gregexpr ("[][\\(\\)\\{\\}\\.\\+\\*\\^\\\\\\$\\?\\|]", data[,col.grapheme])
+	tmp <- which (tmp!=-1)
+	if (length(tmp) > 0) {
+		tmp <- data [unlist(tmp), col.grapheme]
+		stop ("Extended regular expressions metacharacters in graphemes: ", collapse(tmp,inter=", "), ".")
 	}
+
+	# check for linguistic zero
+	tmp <- data [data[,col.value]=="NULL", col.grapheme]
+	if (length(tmp) != 1)
+		stop ("Linguistic zero not defined or defined multiple times.")
+
+	# facilitate lookup
+	rownames(data) <- data [,col.grapheme]
 
 	# if needed, find metacharacters
 	if (col.meta %nin% colnames(data)) {
@@ -2081,9 +1987,9 @@ transcription <- function (data, col.grapheme="GRAPHEME", col.meta="META", col.v
 		# find which graphemes' values are subsets of other graphemes' values
 		expl <- strsplit (as.vector(data[,col.value]), ",")
 		meta <- list ()
-		for (i in 1:length(expl)) {
+		for (i in seq_along(expl)) {
 			tmp <- c ()
-			for (ii in 1:length(expl))
+			for (ii in seq_along(expl))
 				if (all(expl[[i]] %in% expl[[ii]]))
 					tmp <- c(tmp, ii)
 			meta[[i]] <- tmp
@@ -2102,14 +2008,8 @@ transcription <- function (data, col.grapheme="GRAPHEME", col.meta="META", col.v
 
 	}
 
-	# find symbol(s) for linguistic zero
-	tmp <- data [data[,col.value]=="NULL" & !is.na(data[,col.value]), col.grapheme]
-	if (identical(tmp,character(0))) {
-		zero <- NA
-		warning ("Linguistic zero is not defined in the transcription.")
-	} else {
-		zero <- paste0 ("(", collapse(tmp,inter="|"), ")")
-	}
+	# find the grapheme for linguistic zero
+	zero <- data [data[,col.value]=="NULL", col.grapheme]
 
 	# create an object
 	res <- list (
@@ -2188,6 +2088,71 @@ read.transcription <- function (file, col.grapheme="GRAPHEME", col.meta="META", 
 	return (res)
 
 }
+
+# -------------------------------------------------------------------------------------------------- >>> -
+
+# ================================================================================================== >>> =
+
+# = backward "compatibility" ======================================================================= <<< =
+
+# - exp scOne -------------------------------------------------------------------------------------- <<< -
+
+#' @title Information that the \code{scOne} class is obsolete.
+#' @description Since version 0.2.0 it has been replaced with the \code{\link{soundcorrs}} class.
+#' @param ... Ignored, only for compatibilty.
+#' @export
+
+scOne <- function (...)
+	stop ("Since version 0.2.0 the \"scOne\" class is obsolete. See the vignette.")
+
+
+#' @title Information that the \code{scOne} class is obsolete.
+#' @description Since version 0.2.0 it has been replaced with the \code{\link{soundcorrs}} class.
+#' @param ... Ignored, only for compatibilty.
+#' @export
+
+ngrams.scOne <- function (...)
+	stop ("Since version 0.2.0 the \"scOne\" class is obsolete. See the vignette.")
+
+
+#' @title Information that the \code{scOne} class is obsolete.
+#' @description Since version 0.2.0 it has been replaced with the \code{\link{soundcorrs}} class.
+#' @param ... Ignored, only for compatibilty.
+#' @export
+
+print.scOne <- function (...)
+	stop ("Since version 0.2.0 the \"scOne\" class is obsolete. See the vignette.")
+
+
+#' @title Information that the \code{scOne} class is obsolete.
+#' @description Since version 0.2.0 it has been replaced with the \code{\link{soundcorrs}} class.
+#' @param ... Ignored, only for compatibilty.
+#' @export
+
+read.scOne <- function (...)
+	stop ("Since version 0.2.0 the \"scOne\" class is obsolete. See the vignette.")
+
+# -------------------------------------------------------------------------------------------------- >>> -
+# - exp char2value --------------------------------------------------------------------------------- <<< -
+
+#' @title Information that the \code{char2value()} function is obsolete.
+#' @description Since version 0.2.0 it is no longer available. If you need its functionality, please contact kamil.stachowski@gmail.com
+#' @param ... Ignored, only for compatibility.
+#' @export
+
+char2value <- function (...)
+	stop ("Since version 0.2.0 the \"char2value()\" function is obsolete. If you need its functionality, please contact kamil.stachowski@gmail.com.")
+
+# -------------------------------------------------------------------------------------------------- >>> -
+# - exp findSegments ------------------------------------------------------------------------------- <<< -
+
+#' @title Information that the \code{findSegments} function is obsolete.
+#' @description Since version 0.2.0 it is no longer available. If you need its functionality, please contact kamil.stachowski@gmail.com
+#' @param ... Ignored, only for compatibility.
+#' @export
+
+findSegments <- function (...)
+	stop ("Since version 0.2.0 the \"findSegments()\" function is obsolete. If you need its functionality, please contact kamil.stachowski@gmail.com.")
 
 # -------------------------------------------------------------------------------------------------- >>> -
 

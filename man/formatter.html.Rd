@@ -20,6 +20,6 @@ formatter.html(what, x, direction = 1)
 A formatter for \code{\link{allPairs}}. This one formats to HTML.
 }
 \examples{
-dataset <- sampleSoundCorrsData.capitals
+dataset <- sampleSoundCorrsData.abc
 allPairs (dataset, unit="o", formatter=formatter.html)
 }
