@@ -1,3 +1,22 @@
+soundcorrs 0.3.0 (2020-09-16)
+=============================
+
+Additions
+* soundchange class to hold sound changes.
+* applyChanges() function to apply a series of sound changes to a series of words.
+* expandMeta() now supports binary notation.
+* transcription objects now have two more fields: $meta and $values.
+* Expanded documentation.
+
+Changes
+* Sample transcription trans-common.tsv no longer contains metacharactes "x", "ɜ", and "ʌ".
+
+Removals
+* Sample datasets are no longer available in the precompiled form because CRAN
+	will not tolerate non-ASCII characters. They remain available through
+	system.file ("extdata", "trans-common.tsv", package="soundcorrs").
+
+
 soundcorrs 0.2.0 (2020-09-01)
 =============================
 
@@ -23,6 +42,7 @@ Changes
 Removals
 * findSegments() is no longer available.
 	If you need its functionality, please contact kamil.stachowski@gmail.com.
+
 
 
 soundcorrs 0.1.1 (2020-04-24)

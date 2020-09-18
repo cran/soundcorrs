@@ -1,14 +1,14 @@
-## ----setup, include = FALSE---------------------------------------------------
+## ----setup, include = FALSE----------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # install.packages ("soundcorrs")
 library (soundcorrs)
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # establish the paths of the samples included in ‘soundcorrs’
 path.trans.com <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
 path.trans.ipa <- system.file ("extdata", "trans-ipa.tsv", package="soundcorrs")
@@ -25,10 +25,12 @@ trans.com
 
 # ‘data’ is the original data frame
 # ‘cols’ is a guide to column names in ‘data’
+# ‘meta’ is a vector of characters which act as metacharacters
+# ‘values’ is a named list of the values of graphemes, exploded into vectors
 # ‘zero’ are the characters denoting the linguistic zero
 str (trans.com, max.level=1)
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # establish the paths of the two datasets
 path.abc <- system.file ("extdata", "data-abc.tsv", package="soundcorrs")
 path.cap <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
@@ -65,7 +67,41 @@ d.abc
 # ‘words’ are words obtained by removing separators from the ‘col.aligned’ column; ‘$z’ is a variant with linguistic zeros; ‘$nz’ without them
 str (d.abc, max.level=1)
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
+# a simple sound change
+sc.V2a <- soundchange ("V > a", "V>a", trans.com, "All vowels change into a.")
+
+# basic summary
+sc.V2a
+
+# ‘name’ is the name of the sound change
+# ‘desc’ is a brief description
+# ‘fun’ is the sound change function
+# ‘trans’ is the transcription used in the change function
+str (sc.V2a, max.level=1)
+
+# if need be, functions inside ‘soundchange’ objects can be applied directly
+sc.V2a$fun ("ouroboros", NULL)
+
+# a slightly more complex change
+sc.VV2a <- soundchange ("V{2,} > a", "VV>a", trans.com, "Only diphthongs change into a.")
+sc.VV2a$fun ("ouroboros", NULL)
+
+# a slightly more complex change
+sc.CV2Ca <- soundchange ("(C)V > \\1a", "CV>Ca", trans.com, "Only postconsonantal vowels change into a.")
+sc.CV2Ca$fun ("ouroboros", NULL)
+
+# a more complex sound change
+sc.2ndV2a.fun <- function (x, meta) {
+    tmp <- gregexpr (expandMeta(trans.com,"V+"), x)
+    regmatches(x,tmp)[[1]][2] <- "a"
+    return (x)
+}
+sc.2ndV2a <- soundchange (sc.2ndV2a.fun, "2ndV>a", trans.com,
+    "Only the vowel in the second syllable changes into a.")
+sc.2ndV2a$fun ("ouroboros", NULL)
+
+## ------------------------------------------------------------------------
 # a general overview of the dataset as a whole
 summary (d.abc)
 
@@ -79,7 +115,7 @@ round (rels, 2)
 # … relative to entire rows
 apply (rels, 1, sum)
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # a general look in the internal mode
 coocc (d.abc)
 
@@ -106,7 +142,7 @@ tab <- coocc (d.abc, "DIALECT.L2", count="r")
 rows.a <- which (rownames(tab) %hasPrefix% "a")
 sum (tab [rows.a, ])
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # for a small dataset, the result is going to be small
 str (allCooccs(d.abc), max.level=0)
 
@@ -119,7 +155,7 @@ names (allCooccs(d.abc))
 # and with ‘column’ not ‘NULL’
 names (allCooccs(d.abc,column="DIALECT.L2"))
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 
 # “ab” spans segments 1–2, while “a” only occupies segment 1
 findExamples (d.abc, "ab", "a", distance.end=0)
@@ -150,7 +186,7 @@ d.cap$data [aaa & bbb,]
 # the ‘cols’ argument can be used to alter the printed output
 findExamples (d.abc, "a", "O", cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # and see what result this gives
 allPairs (d.abc, cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
 
@@ -158,7 +194,7 @@ allPairs (d.abc, cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
 # allPairs (d.cap, cols=c("ORTHOGRAPHY.German","ORTHOGRAPHY.Polish"),
 #    file="~/Desktop/d.cap.html", formatter=formatter.html)
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # load the new formatter function …
 # source ("~/Desktop/myFormatter.R")
 
@@ -167,7 +203,7 @@ allPairs (d.abc, cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
 #    file="~/Desktop/d.cap.html", formatter=myFormatter)
 # note that this time the output will not open in the web browser automatically 
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # prepare some random data
 set.seed (27)
 dataset <- data.frame (X=1:10, Y=1:10 + runif(10,-1,1))
@@ -184,9 +220,9 @@ fit <- multiFit (models, dataset)
 # inspect the results
 summary (fit)
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # prepare the data
-dataset <- coocc (sampleSoundCorrsData.abc)
+dataset <- coocc (d.abc)
 
 # prepare the models to be tested
 models <- list (
@@ -200,14 +236,34 @@ fit <- fitTable (models, dataset, 1, vec2df.hist)
 # inspect the results
 summary (fit, metric="sigma")
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
+# prepare a list of changes, in the order of application
+sc.list <- list (sc.VV2a, sc.2ndV2a, sc.CV2Ca)
+
+# prepare the data and the expected results
+data <- c ("ouroboros", "jormungandr")
+target <- c ("arabaras", "jarmangandr")
+
+# and apply the changes to our data
+res <- applyChanges (data, sc.list, target, meta=NULL)
+res
+
+# see if they match the expectations
+res$match
+
+# see which change did not work as expected
+#    it was CV > Ca because our changes use the sample "common" transcription,
+#    and j does not count in it as a consonant (it's a semivowel)
+res$tree
+
+## ------------------------------------------------------------------------
 # using the default ‘|’ …
 addSeparators (d.abc$data$ORTHOGRAPHY.L1)
 
 # … or a full stop
 addSeparators (d.abc$data$ORTHOGRAPHY.L1, ".")
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # build a table for a slightly larger dataset
 tab <- coocc (d.cap)
 
@@ -221,19 +277,23 @@ rows <- which (rownames(tab) %hasPrefix% "[aāäǟ]")
 cols <- which (colnames(tab) %hasPrefix% "[oōöȫ]")
 binTable (tab, rows, cols)
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # let us search a column other than the one specified as ‘aligned’
 orth <- d.abc$data [, "ORTHOGRAPHY.L2"]
 
 # look for all VCC sequences
-query <- expandMeta(d.cap$trans[[1]],"VCC")
+query <- expandMeta (d.cap$trans[[1]], "VCC")
 orth [grep(query,orth)]
 
 # look for all VCC words
-query <- expandMeta(d.cap$trans[[1]],"^VCC$")
+query <- expandMeta (d.cap$trans[[1]], "^VCC$")
 orth [grep(query,orth)]
 
-## -----------------------------------------------------------------------------
+# the same in the binary notation
+query <- expandMeta (d.cap$trans[[1]], "^[+vow][+cons][+cons]$")
+orth [grep(query,orth)]
+
+## ------------------------------------------------------------------------
 # build a table for a slightly larger dataset
 tab <- coocc (d.cap)
 
@@ -243,7 +303,7 @@ rows <- which (rownames(tab) %hasPrefix% "[aāäǟ]")
 cols <- which (colnames(tab) %hasPrefix% "[sśš]")
 tab [rows, cols]
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # build a table for a slightly larger dataset
 tab <- coocc (d.cap)
 
@@ -253,7 +313,7 @@ rows <- which (rownames(tab) %hasSuffix% "[aāäǟ]")
 cols <- which (colnames(tab) %hasSuffix% "[sśš]")
 tab [rows, cols]
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # let us prepare the tables
 tabs <- allCooccs (d.abc, bin=F)
 
@@ -271,7 +331,14 @@ attr (chisq$a, "warning")
 # this warning often means that the data were insufficient
 tabs$a
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
+# load a transcription
+tmp <- loadSampleDataset ("trans-common")
+
+# it's the same that we've already loaded above
+identical (tmp, trans.com)
+
+## ------------------------------------------------------------------------
 # the “abc” dataset is in the long format
 abc.long <- read.table (path.abc, header=T)
 
@@ -281,7 +348,7 @@ long2wide (abc.long)
 # but this can be avoided with the ‘skip’ argument
 abc.wide <- long2wide (abc.long, skip="ID")
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # with n==1, ngrams() returns simply the frequencies of segments
 ngrams (d.cap$data[,"ORTHOGRAPHY.Spanish"])
 
@@ -290,7 +357,7 @@ tab <- ngrams (d.cap$data[,"ORTHOGRAPHY.Spanish"], n=2)
 mtx <- as.matrix (sort(tab,decreasing=T))
 head (data.frame (RANK=1:length(mtx), COUNT=mtx, FREQ=mtx/sum(mtx)))
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # select only examples from L2’s northern dialect
 subset (d.abc, DIALECT.L2=="north") $data
 
@@ -300,7 +367,7 @@ subset (d.cap, grepl("German",d.cap$data$OFFICIAL.LANGUAGE)) $data
 # select only pairs in which L1 a : L2 a
 subset (d.abc, findPairs(d.abc,"a","a")$which) $data
 
-## -----------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 # let us use the converted “abc” dataset
 abc.wide
 

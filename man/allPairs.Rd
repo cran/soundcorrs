@@ -23,11 +23,20 @@ allPairs(data, file, count, unit, direction, cols, formatter, ...)
 
 \item{...}{Additional arguments passed to \code{formatter}.}
 }
+\value{
+[character] A formatted list of of all segment-to-segment correspondences and all pairs in which they are attested.
+}
 \description{
 Take all segment-to-segment correspondences in the dataset, and produce for each a section composed of a title, a contingency table of all renderings of the given segment, and subsections listing all word pairs in which the given rendering is attested, all nicely formatted.
 }
+\details{
+\code{\link{summary.soundcorrs}} can produce a table of all segment-to-segment correspondences in a dataset, and \code{\link{findExamples}} and \code{\link{findPairs}} can find all the pairs of words which realize those correspondences, but combining their outputs is a time-consuming, and unnecessary manual labour. The same, or at least a very similar result can be produced automatically by this function. Its output is divided into sections, each comprised of the appropriate slice of the contingency table, and a list of all the examples which are relevant for the given correspondence. The output can be raw, or formatted as LaTeX or HTML, and it is not too difficult to write one's own, custom formatting function.
+}
 \examples{
-dataset <- sampleSoundCorrsData.abc
+dataset <- loadSampleDataset ("data-abc")
 allPairs (dataset)
-allPairs (dataset, formatter=formatter.latex, cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
+allPairs (dataset, formatter=formatter.latex, cols=c("ORTHOGRAPHY.L1", "ORTHOGRAPHY.L2"))
+}
+\seealso{
+\code{\link{findPairs}}, \code{\link{summary.soundcorrs}}
 }

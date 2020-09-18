@@ -21,12 +21,15 @@ coocc(data, column, count, unit)
 \description{
 Take all segment-to-segment correspondences in a dataset, and cross-tabulate them with themselves or with metadata taken from a separate column.
 }
+\details{
+A set of segmented and aligned word pairs/triples/..., such as one held in a \code{\link{soundcorrs}} object, can be turned into a contingency table in more than one way. This function creates a table which details how often various sound correspondences co-occur in one word. Both rows and columns are named in the same way: L1 phoneme + underscore ("_") + L2 phoneme. The values in the table can be absolute or relative, and they can represent the number of times the given correspondence co-occurs, or the number of words in which it co-occurs. For example, in the pair German koala : French koala, the correspondence G a : Fr a (\code{"a_a"}) co-occurs twice: the correspondence of the first two a's co-occurs with the correspondence of the second two a's, and vice versa. When the numbers are relative, they add up to 1 in blocks where each block is an intersection of rows and columns whose names begin with the same segment, i.e. those which refer to the correspondences of the same segment. In the relative view, empty cells appear when the given correspondence never co-occurs, and therefore its relative frequency is 0 divided by 0.
+}
 \examples{
-dataset <- sampleSoundCorrsData.abc
+dataset <- loadSampleDataset ("data-abc")
 coocc (dataset)
 coocc (dataset, "DIALECT.L2")
 round (coocc(dataset,"DIALECT.L2",count="r"), digits=3)
 }
 \seealso{
-\code{\link{summary}}, \code{\link{allCooccs}}.
+\code{\link{summary.soundcorrs}}, \code{\link{allCooccs}}
 }

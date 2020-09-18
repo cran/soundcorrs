@@ -4,7 +4,8 @@
 \alias{read.soundcorrs}
 \title{Read data for a single language from a tsv file.}
 \usage{
-read.soundcorrs(file, name, col.aligned, transcription, separator = "\\\\|")
+read.soundcorrs(file, name, col.aligned, transcription,
+  separator = "\\\\|")
 }
 \arguments{
 \item{file}{[character] Path to the data file in the wide format.}
@@ -23,10 +24,16 @@ read.soundcorrs(file, name, col.aligned, transcription, separator = "\\\\|")
 \description{
 Read the data for one language, from a file in the wide format, and combine it with metadata into a \code{\link{soundcorrs}} object. To obtain a \code{soundcorrs} object containing data for multiple languages, see \code{\link{merge.soundcorrs}}.
 }
+\details{
+The constructor for the \code{\link{soundcorrs}} class requires a data frame and a \code{\link{transcription}} object which means that the user would need to first read both from a file, and only then pass them to the constructor. This function saves these two steps. In addition, it attaches the name of the file to the object, which allows for easier identification later. It is recommended to use \code{read.soundcorrs} instead of the raw \code{\link{soundcorrs}} constructor whenever possible.
+}
 \examples{
 # path to sample data in the "wide format"
-fNameData <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
+fNameData <- system.file ("extdata", "data-ie.tsv", package="soundcorrs")
 # path to a sample transcription
 fNameTrans <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
-ger <- read.soundcorrs (fNameData, "German", "ALIGNED.German", fNameTrans)
+ger <- read.soundcorrs (fNameData, "Latin", "LATIN", fNameTrans)
+}
+\seealso{
+\code{\link{soundcorrs}}
 }

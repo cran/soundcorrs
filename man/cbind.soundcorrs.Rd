@@ -17,8 +17,11 @@
 \description{
 Attach one or more columns to a \code{\link{soundcorrs}} object. Note that sound correspondences attached with this function will not be usable as such.
 }
+\details{
+Once a data frame is enclosed in a \code{\link{soundcorrs}} object, it is recommended that it not be manually altered in any way. \code{cbind.soundcorrs} provides a safe way of adding a column to it.
+}
 \examples{
-dataset <- sampleSoundCorrsData.capitals
+dataset <- loadSampleDataset ("data-ie")
 cbind (dataset, ID=1:nrow(dataset$data))
-cbind (dataset, CONTINENT="Europe")
+cbind (dataset, FAMILY="Indo-European")
 }

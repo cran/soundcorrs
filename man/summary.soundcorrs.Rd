@@ -9,9 +9,9 @@
 \arguments{
 \item{object}{[soundcorrs] The dataset from which to draw frequencies. Only datasets with two languages are supported.}
 
-\item{count}{[character] Report either the absolute number of times or words, or relative to how many times or in how many words the given segments correspond to each other. Accepted values are \code{"a(bs(olute))"} and \code{"r(el(ative))"}. Defaults to "a".}
+\item{count}{[character] Report either the absolute or the relative numbers?. Accepted values are \code{"a(bs(olute))"} and \code{"r(el(ative))"}. Defaults to "a".}
 
-\item{unit}{[character] Count how many times a correspondence occurs or in how many words it occurs. Accepted values are \code{"o(cc(ur(ence(s))))"} and \code{"w(or(d(s)))"}. Defaults to \code{"w"}.}
+\item{unit}{[character] Count how many times a correspondence occurs or in how many words it occurs? Accepted values are \code{"o(cc(ur(ence(s))))"} and \code{"w(or(d(s)))"}. Defaults to \code{"w"}.}
 
 \item{...}{Unused; only for consistency with \code{\link{print}}.}
 }
@@ -21,12 +21,15 @@
 \description{
 Produce a contingency table detailing all segment-to-segment correspondences in a dataset.
 }
+\details{
+A set of segmented and aligned word pairs/triples/..., such as one held in a \code{\link{soundcorrs}} object, can be turned into a contingency table in more than one way. Perhaps the simplest option is to see how often various segments from one language correspond to various segments from another language, which is the kind of table this function produces. Correspondences can be reported in absolute or relative numbers, and can represent the number of times the given correspondence occurs, or in how many words it occurs (the same correspondence can occur more than once in a single pair/triple/... of words, e.g. in German koala : French koala, the correspondence G a : Fr a occurs twice). When the numbers are relative, each row in the table adds up to 1. In theory, \code{summary.soundcorrs} can support a \code{\link{soundcorrs}} objects with any number of languages in it, but the legibility of the output drops very quickly when that number exceeds two.
+}
 \examples{
-dataset <- sampleSoundCorrsData.abc
+dataset <- loadSampleDataset ("data-ie")
 summary (dataset)
 round (summary(dataset,count="r"), digits=3)
 summary (dataset, unit="o")
 }
 \seealso{
-\code{\link{coocc}}.
+\code{\link{coocc}}
 }

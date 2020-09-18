@@ -14,7 +14,7 @@ ID	LANGUAGE	DIALECT	ALIGNED	ORTHOGRAPHY
 # - L1 literary standard : L2 northern dialect ----------------------------------------------------- <<< -
 
 3	L1	std	a|b|c	abc
-3	L2	north	o|b|c	åbc
+3	L2	north	o|b|c	aobc
 
 4	L1	std	a|b|a|c	abac
 4	L2	north	u|w|u|c	uwuc

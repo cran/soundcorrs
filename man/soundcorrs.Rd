@@ -18,10 +18,19 @@ soundcorrs(data, name, col.aligned, transcription, separator = "\\\\|")
 \item{separator}{[character] String used to separate segments in \code{col.aligned}. Defaults to \code{"\\|"}.}
 }
 \value{
-[soundcorrs] An object containing the data and metadata for one language.
+[soundcorrs] An object containing the provided data and metadata for one language.
 }
 \description{
 Take a data frame and turn it into a \code{soundcorrs} object containing data for one language. To obtain a \code{soundcorrs} object containing data for multiple languages, see \code{\link{merge.soundcorrs}}. In the normal workflow, the user should have no need to call this constructor other than through \code{\link{read.soundcorrs}}.
+}
+\details{
+\code{soundcorrs} is the fundamental class of the entire soundcorrs package, and it is required for most tasks that the package promises to make easier and faster than manual labour. A \code{soundcorrs} object is a list containing the original data frame, some metadata (names of languages, names of columns, transcriptions), as well as transformations of the original data for faster processing in \code{\link{findExamples}} and other functions (words exploded into individual segments, with segment separators removed, etc.). The basic unit in \code{soundcorrs} is a pair/triple/... of words, each of which is assigned to a specific language.
+
+This constructor function is not really intended for the end user. Whenever possible, \code{\link{read.soundcorrs}} should be used instead. Regardless of the function used, two pieces of information are required for each word: the language it comes from, and its segmented and aligned form. Segmentation means that the word is cut into parts which can represent phonemes, morphemes, or anything else (the default separator is a vertical bar, \code{"|"}). A word with no separators in it is considered one big segment, and in fact, for \code{\link{soundchange}}'s this is enough. Alignment means that each word in a pair/triple/... has the same number of segments, and that those segments are in the corresponding places. Often, one of the words in a pair/triple/... will naturally have fewer segments than the others; in such cases, a filler character, 'linguistic zero' needs to be used (\code{"-"} is a good choice); for example, to align the Spanish and Swedish names for 'Stockholm', a total of three such 'empty' segments is required: e|s|t|o|k|-|o|l|m|o : -|s|t|o|k|k|o|l|m|-. Linguistic zero must be defined in the \code{\link{transcription}}.
+
+Typically, a \code{soundcorrs} object will be used to hold an entire list of pairs/triples/... of words from various languages. However, both this constructor function and \code{\link{read.soundcorrs}} can only read data from one language at a time. This is because each language requires relatively many pieces of metadata (name, column names, transcription), and if all of this information for multiple languages were to be passed as arguments to one function, the call would very quickly become illegible. Multiple \code{\link{soundcorrs}} objects can be merged into one using \code{\link{merge.soundcorrs}}.
+
+Three sample datasets are available: \code{data-abc}, \code{data-capitals}, and \code{data-ie}; they can be loaded with the help of \code{\link{loadSampleDataset}}.
 }
 \section{Fields}{
 
@@ -44,15 +53,14 @@ Take a data frame and turn it into a \code{soundcorrs} object containing data fo
 }}
 
 \examples{
+# prepare sample transcription
+trans <- loadSampleDataset ("trans-common")
 # read sample data in the "wide format"
 fNameData <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
 readData <- read.table (fNameData, header=TRUE)
-# read the sample transcription
-fNameTrans <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
-readTrans <- read.transcription (fNameTrans)
 # make out of them a soundcorrs object
-ger <- soundcorrs (readData, "German", "ALIGNED.German", readTrans)
-pol <- soundcorrs (readData, "Polish", "ALIGNED.Polish", readTrans)
-spa <- soundcorrs (readData, "Spanish", "ALIGNED.Spanish", readTrans)
+ger <- soundcorrs (readData, "German", "ALIGNED.German", trans)
+pol <- soundcorrs (readData, "Polish", "ALIGNED.Polish", trans)
+spa <- soundcorrs (readData, "Spanish", "ALIGNED.Spanish", trans)
 dataset <- merge (ger, pol, spa)
 }

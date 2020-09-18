@@ -19,11 +19,15 @@
 \description{
 Reduce a \code{\link{soundcorrs}} object to just those word pairs/triples/... which meet a certain condition.
 }
+\details{
+Once a data frame is enclosed in a \code{\link{soundcorrs}} object, it is recommended that it not be manually altered in any way. \code{subset.soundcorrs} provides a safe way of subsetting it.
+}
 \examples{
 # In the examples below, non-ASCII characters had to be escaped for technical reasons.
 # In actual usage, all soundcorrs functions accept characters from beyond ASCII.
-dataset <- sampleSoundCorrsData.capitals
+
+dataset <- loadSampleDataset ("data-capitals")
 subset (dataset, OFFICIAL.LANGUAGE=="German")
 subset (dataset, grepl("German",OFFICIAL.LANGUAGE))
-subset (dataset, findExamples(dataset, "\u00E4", "e", "")$which)  # a-diaeresis
+subset (dataset, findExamples(dataset, "\\u00E4", "e", "")$which)  # a-diaeresis
 }

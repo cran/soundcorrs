@@ -23,11 +23,21 @@ findPairs(data, x, y, exact, cols)
 \description{
 Sift the dataset for word pairs such that the first word contains \code{x} and the second word contains \code{y} in the corresponding segment or segments.
 }
+\details{
+Probably the most common usage of \code{\link{findExamples}} is with datasets containing pairs of words. This function is a simple wrapper around \code{\link{findExamples}} which hopes to facilitate its use in this most common case. Instead of the five arguments that \code{\link{findExamples}} requires, this function only takes two. It is, of course, at the cost of control but should a more fine-tuned search be required, \code{\link{findExamples}} can always still be used instead of \code{findPairs}.
+}
 \examples{
 # In the examples below, non-ASCII characters had to be escaped for technical reasons.
 # In the actual usage, Unicode is supported under BSD, Linux, and macOS.
-dataset <- sampleSoundCorrsData.capitals
+
+# prepare sample dataset
+dataset <- loadSampleDataset ("data-ie")
+# run findPairs
+findPairs (dataset, "a", "a")
+findPairs (dataset, "e", "f", exact=0)
+findPairs (dataset, "e", "f", exact=0.5)
+findPairs (dataset, "e", "f", exact=1)
 }
 \seealso{
-\code{\link{findExamples}}, \code{\link{allPairs}}.
+\code{\link{findExamples}}, \code{\link{allPairs}}
 }

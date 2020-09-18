@@ -23,11 +23,14 @@ allCooccs(data, column, count, unit, bin)
 \description{
 Generate all correspondence-to-correspondence or correspondence-to-metadata contingnecy tables for a dataset.
 }
+\details{
+A contingency table such as produced by \code{\link{coocc}} may be insightful but more often than not statistical tests cannot be applied directly to it, or at least they would not produce meaningful results. This function splits such a table into blocks such that each block only contains the correspondences of a single segment. The resulting slices, additionally binned or not (cf. \code{\link{binTable}}), can be then passed to \code{\link{lapplyTest}} for a near-automatic application of a test.
+}
 \examples{
-dataset <- sampleSoundCorrsData.abc
+dataset <- loadSampleDataset ("data-abc")
 allCooccs (dataset)
 allCooccs (dataset, "DIALECT.L2", unit="o")
 }
 \seealso{
-\code{\link{table}}.
+\code{\link{coocc}}, \code{\link{binTable}}, \code{\link{lapplyTest}}
 }

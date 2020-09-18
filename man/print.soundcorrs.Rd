@@ -12,13 +12,18 @@
 \item{...}{Unused; only for consistency with \code{\link{print}}.}
 }
 \value{
-A more human-friendly digest.
+[soundcorrs] The same object that was given as \code{x}.
 }
 \description{
 A more reasonable display of a \code{\link{soundcorrs}} object.
 }
+\details{
+A \code{\link{soundcorrs}} may be quite large and therefore difficult to digest for a human. This function reduces it to a brief, easy to understand summary.
+}
 \examples{
-sampleSoundCorrsData.abc
-sampleSoundCorrsData.capitals
-sampleSoundCorrsData.ie
+dataset <- loadSampleDataset ("data-abc")
+dataset
+}
+\seealso{
+\code{\link{soundcorrs}}
 }

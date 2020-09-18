@@ -15,6 +15,9 @@
 \description{
 Take multiple \code{\link{soundcorrs}} objects and combine them into one.
 }
+\details{
+Data can be turned into a \code{\link{soundcorrs}} object using either \code{\link{read.soundcorrs}} or, the less preferred method, the raw \code{\link{soundcorrs}} constructor. However, both can only produce \code{\link{soundcorrs}} objects with only the data for a single language in them, whereas the typical usage of the \code{soundcorrs} package would require it to hold data for several languages simultaneously. This function can be used to safely combine multiple \code{\link{soundcorrs}} objects into one. The individual objects can all hold data for one or more languages, the only requirement being that the data from the different languages are compatible with each other, i.e. that they have the same number of words, and each word has the same number of segments as its counterparts in the pair/triple/.... An error will be also thrown if two or more of the datasets contain a column with the same name and different content, or when they contain two or more rows with identical content.
+}
 \examples{
 # path to sample data in the "wide format"
 fNameData <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")

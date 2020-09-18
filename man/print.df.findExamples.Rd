@@ -12,12 +12,18 @@
 \item{...}{Unused; only for consistency with \code{\link{print}}.}
 }
 \value{
-A more human-friendly digest.
+[df.findExamples] The same object that was given as \code{x}.
 }
 \description{
 Pretty printing for the result of \code{\link{findExamples}}.
 }
+\details{
+The output of \code{\link{findExamples}} is a list, potentially a very long one, and difficult to read. To make it easier to digest, this function only prints the \code{$data} element, i.e. the found matches.
+}
 \examples{
-dataset <- sampleSoundCorrsData.capitals
+dataset <- loadSampleDataset ("data-capitals")
 findExamples (dataset, "a", "a", "a", cols="all")
+}
+\seealso{
+\code{\link{findExamples}}
 }

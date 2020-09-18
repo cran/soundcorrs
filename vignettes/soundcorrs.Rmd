@@ -1,10 +1,10 @@
 ---
-title: "soundcorrs: Semi-Automatic Analysis of Sound Correspondences (v0.2.0)"
+title: "soundcorrs: Semi-Automatic Analysis of Sound Correspondences (v0.3.0)"
 author: "Kamil Stachowski"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{soundcorrs: Semi-Automatic Analysis of Sound Correspondences (v0.2.0)}
+  %\VignetteIndexEntry{soundcorrs: Semi-Automatic Analysis of Sound Correspondences (v0.3.0)}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -19,11 +19,11 @@ knitr::opts_chunk$set(
 <!-- introduction ================================================================================ {{{ -->
 
 
-‘soundcorrs’ is a small package whose purpose in life is to help linguists analyse sound correspondences between languages. It does not attempt to draw any conclusions on its own; this responsibility is placed entirely on the user. ‘soundcorrs’ merely automates and facilitates certain tasks, such as preparing the material part of the paper, or looking for examples of specific correspondences and, by making various functions available, suggests possible paths of analysis which may not be immediately obvious to the more traditional linguist.
+‘soundcorrs’ is a small package whose purpose is to help linguists analyse sound correspondences between languages. It does not attempt to draw any conclusions on its own; this responsibility is placed entirely on the user. ‘soundcorrs’ merely automates and facilitates certain tasks, such as preparing the material part of the paper, looking for examples of specific correspondences, or applying series of sound changes, and, by making various functions available, suggests possible paths of analysis which may not be immediately obvious to the more traditional linguist.
 
-This vignette assumes that the reader not only is a linguist and has at least a general idea about what kind of outputs he or she might want from ‘soundcorrs’, but also has at least a passing familiarity with R and a basic understanding of statistics. Most problems can probably be read up on as they appear in the text, but it is nevertheless recommended to start by very briefly acquainting oneself with R by reading the first page of maybe [Quick-R](https://www.statmethods.net/r-tutorial/index.html), [R Tutorial](http://www.r-tutor.com/r-introduction), or another R primer. In particular, it is assumed that the reader will know how to access and understand the built-in documentation, as not all arguments are discussed here.
+This vignette assumes that the reader not only is a linguist and has at least a general idea about what kind of outputs he or she might want from ‘soundcorrs’, but also has at least a passing familiarity with R and a basic understanding of statistics. Most problems can probably be read up on as they appear in the text, but it is nevertheless recommended to start by very briefly acquainting oneself with R by reading the first page of maybe [Quick-R](https://www.statmethods.net/r-tutorial/index.html), [R Tutorial](http://www.r-tutor.com/r-introduction), or another R primer. In particular, it is assumed that the reader will know how to access and understand the built-in documentation, as not all of the arguments are discussed here. Another topic that is highly recommended, as without it ‘soundcorrs’ cannot be used to its full potential, are regular expressions. An accessible introduction can be found in R.D. Peng’s [_R Programming for Data Science_](https://bookdown.org/rdpeng/rprogdatascience/regular-expressions.html), as well as in many other places around the Internet, and a handy [cheat sheet](https://rstudio.com/wp-content/uploads/2016/09/RegExCheatsheet.pdf) has been made available by [RStudio](https://rstudio.com).
 
-A less technical introduction to ‘soundcorrs’ is also available in Stachowski K. 2020. Tools for Semi-Automatic Analysis of Sound Correspondences: The _soundcorrs_ Package for R. _Glottometrics_ 49. 66–86. If you use ‘soundcorrs’ in your research, please cite this paper.
+Though a little dated by now, a less technical introduction to ‘soundcorrs’ is also available in Stachowski K. 2020. Tools for Semi-Automatic Analysis of Sound Correspondences: The _soundcorrs_ Package for R. _Glottometrics_ 49. 66–86. If you use ‘soundcorrs’ in your research, please cite this paper.
 
 The first section of this vignette discusses in short how to prepare data for ‘soundcorrs’. The second section is an overview of all the analytic functions exported by ‘soundcorrs’ organized by their output, and of helper functions in the alphabetical order.
 
@@ -42,7 +42,7 @@ library (soundcorrs)
 # Data preparation
 
 
-‘soundcorrs’ requires two kinds of data: transcription and word pairs/triples/…. Both are stored in tsv files, i.e. as tab-separated tables in text files.
+Whether you intend to use ‘soundcorrs’ for analysis of sound correspondences or sound changes, you will need to define a transcription. For sound correspondences, you will additionally need to segment and align word pairs/triples/…, and for sound changes, define the sound changes. Transcription and word pairs/triples/… are stored in tsv files, i.e. as tab-separated tables in text files. Sound changes are functions, so they are stored as R code.
 
 Under BSD, Linux, and macOS, the recommended encoding is UTF-8. Unfortunately, it has been found to cause problems under Windows, so Windows users are advised to not use characters outside of the ASCII standard. Some issues can be fixed by converting from UTF-8 to UTF-8 (sic!) with ‘iconv()’, but others resist this and other treatments. Future versions of ‘soundcorrs’ hope to include a solution for this problem.
 
@@ -50,15 +50,15 @@ Under BSD, Linux, and macOS, the recommended encoding is UTF-8. Unfortunately, i
 ## Transcription
 
 
-Transcription is not strictly necessary for the functioning of ‘soundcorrs’, but without it linguistic regular expresssions (“wildcards”) could not be defined, and involvement of phonetics in the analysis would be made more difficult. Transcription is stored in tsv files with two or three columns:
+Transcription is not strictly necessary for the very functioning of ‘soundcorrs’, but without it linguistic regular expresssions (“wildcards”) could not be defined, and involvement of phonetics in the analysis would be made more difficult. Transcription is stored in tsv files with two or three columns:
 
 * GRAPHEME, which contains the graphemes. Characters used by R as metacharacters in regular expressions, i.e. . + * ^ \ $ ? | ( ) [ ] { }, are not allowed. Multigraphs also should not be used as they can lead to unexpected and incorrect results, especially in the case metacharacters (“wildcards”).
 
 * VALUE, which contains a comma-separated list of features of the given grapheme. These are intended to be phonetic but do not necessarily have to be so. If the column META is missing, it is generated based on the column VALUE.
 
-* META, which contains a regular expression covering all the graphemes the given grapheme is meant to represent. In regular graphemes, this is simply the grapheme itself. In a metacharacter, such as ‘C’ for ‘any consonant’, this needs to be a listing of all consonantal graphemes in the transcription file, formatted as a regular expression. It is recommended to leave this column empty, as in such case ‘soundcorrs’ will generate it automatically.
+* META, which contains a regular expression covering all the graphemes the given grapheme is meant to represent. In regular graphemes, this is simply the grapheme itself. In a metacharacter, such as ‘C’ for ‘any consonant’, this needs to be a listing of all consonantal graphemes in the transcription file, formatted as a regular expression. It is recommended to leave this column empty, as in such case ‘soundcorrs’ will generate it automatically. Beware, however, that in this process any grapheme whose value is a subset of the value of another grapheme, will become a metacharacter for that other grapheme.
 
-‘soundcorrs’ contains two sample transcription files: ‘trans-common.tsv’ and ‘trans-ipa.tsv’. Both only cover the basics and are intended more as an illustration than anything else. To load one of them:
+‘soundcorrs’ contains two sample transcription files: ‘trans-common.tsv’ and ‘trans-ipa.tsv’. Both only cover the basics and are intended more as an illustration than anything else. The paths of the data files can be established with ‘system.file()’ as in the snippet below, or the entire ‘transcription’ objects can be loaded using ‘loadSampleDataset()’ (see below).
 
 ```{r}
 # establish the paths of the samples included in ‘soundcorrs’
@@ -77,6 +77,8 @@ trans.com
 
 # ‘data’ is the original data frame
 # ‘cols’ is a guide to column names in ‘data’
+# ‘meta’ is a vector of characters which act as metacharacters
+# ‘values’ is a named list of the values of graphemes, exploded into vectors
 # ‘zero’ are the characters denoting the linguistic zero
 str (trans.com, max.level=1)
 ```
@@ -89,7 +91,7 @@ str (trans.com, max.level=1)
 
 Like the transcription, the data are also stored in tsv files. Two formats are theoretically possible: the “long format” in which every word is given its own row, and the “wide format” in which one row holds a pair/triple/… of words (see below).
 
-For most tasks, words need to be segmented, and all words in a pair/triple/… must have the same number of segments. The default segment separator is ‘|’. If the words are not segmented, the function ‘addSeparators()’ can be used to facilitate the process of manual segmentation and alignment (see below). Tools for automatic alignment also exist (e.g. [alineR](https://CRAN.R-project.org/package=alineR), [LingPy](http://lingpy.org/), [PyAline](http://pyaline.sourceforge.net/)), but it is recommended that their results be thoroughly checked by a human. Apart from the segmented and aligned form, each word must be assigned a language.
+With the notable exception of sound changes, words need to be segmented for most tasks in ‘soundcorrs’, and all words in a pair/triple/… must have the same number of segments. The default segment separator is ‘|’. If the words are not segmented, the function ‘addSeparators()’ can be used to facilitate the process of manual segmentation and alignment (see below). Tools for automatic alignment also exist (e.g. [alineR](https://CRAN.R-project.org/package=alineR), [LingPy](http://lingpy.org/), [PyAline](http://pyaline.sourceforge.net/)), but it is recommended that their results be thoroughly checked by a human. Apart from the segmented and aligned form, each word must be assigned a language.
 
 Hence, the two obligatory columns in the “long format” are
 
@@ -103,7 +105,7 @@ Regarding the two formats, see also ‘long2wide()’ and ‘wide2long()’ belo
 
 It is possible, though not necessarily recommended, to store data from each language in a separate file; it is also possible to use a different transcription for each language. This flexibility can easily lead to a somewhat cumbersome string of arguments for the reader function, so the ‘read.soundcorrs’ function is limited to reading the data for just one language. Individual ‘soundcorrs’ objects can be then combined into one using the ‘merge’ function. The reader function only accepts data in the “wide format”.
 
-‘soundcorrs’ has three sample datasets: 1. the entirely made-up ‘data-abc.tsv’; 2. ‘data-capitals.tsv’ which contains the names of EU capitals in German, Polish and Spanish – from the linguistic point of view, this of course makes no sense; it is merely an example that will hopefully not be seen as too exotic regardless of which language or languages the user specializes in (my gratitude is due to José Andrés Alonso de la Fuente, PhD (Cracow, Poland) for help with Spanish data); and 3. ‘data-ie.tsv’ with a dozen examples of Grimm’s and Verner’s laws (adapted from Campbell L. 2013. Historical Linguistics. An Introduction. Edinburgh University Press. Pp. 136f). The ‘abc’ dataset is in the “long format”, the ‘capitals’ and ‘ie’ datasets are in the “wide format”. All three are also available as preloaded datasets ‘sampleSoundCorrsData.abc’, ‘sampleSoundCorrsData.capitals’, and ‘sampleSoundCorrsData.ie.’.
+‘soundcorrs’ has three sample datasets: 1. the entirely made-up ‘data-abc.tsv’; 2. ‘data-capitals.tsv’ which contains the names of EU capitals in German, Polish and Spanish – from the linguistic point of view, this of course makes no sense; it is merely an example that will hopefully not be seen as too exotic regardless of which language or languages the user specializes in (my gratitude is due to José Andrés Alonso de la Fuente, PhD (Cracow, Poland) for help with Spanish data); and 3. ‘data-ie.tsv’ with a dozen examples of Grimm’s and Verner’s laws (adapted from Campbell L. 2013. _Historical Linguistics. An Introduction_. Edinburgh University Press. Pp. 136f). The ‘abc’ dataset is in the “long format”, the ‘capitals’ and ‘ie’ datasets are in the “wide format”. The paths of the data files can be established with ‘system.file()’ as in the snippet below, or the entire ‘soundcorrs’ objects can be loaded using ‘loadSampleDataset()’ (see below).
 
 ```{r}
 # establish the paths of the two datasets
@@ -141,6 +143,57 @@ d.abc
 # ‘trans’ are ‘transcription’ objects
 # ‘words’ are words obtained by removing separators from the ‘col.aligned’ column; ‘$z’ is a variant with linguistic zeros; ‘$nz’ without them
 str (d.abc, max.level=1)
+```
+
+
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+<!-- sound changes ------------------------------------------------------------------------------- {{{ -->
+## Sound changes
+
+
+Unlike the transcription and linguistic data, sound changes in ‘soundcorrs’ are in fact bits of code. (The distinction is in fact less than sharp in R, but this is a separate topic.) This gives the user much greater control, while remaining convenient because simple sound changes can be translated automatically.
+
+A sound change function must take two arguments: ‘x’ and ‘meta’, where ‘x’ is a character string to which the change is to be applied, and ‘meta’ is a piece of metadata that might need to be taken into account. The return value of a sound change function must be a vector of character strings, possibly of length 1, i.e. a single character string. The ability to output multiple strings, however, is important because it allows for regressive changes (e.g. to account for both possible sources of a vowel that merged with another vowel).
+
+A sound change function is not expected to be used directly by the user. It is intended to be wrapped in a ‘soundchange’ object using the ‘soundchange()’ constructor function. Apart from the function itself, such an object holds the name and a brief description of the change.
+
+Simpler changes, ones that can be written in the form of a single regular expression, need not be explicitly defined as functions. The ‘soundchange()’ constructor accepts both functions and character strings; the latter are then converted into functions automatically. Such a string must contain exactly one ‘>’ or ‘<’, possibly surrounded by spaces.
+
+‘soundcorrs’ contains three sample changes files: ‘change-dl2l.R’, ‘change-palatalization.R’, and ‘change-rhotacism.R’. The paths of the data files can be established with ‘system.file()’ as was done with ‘transcription’ and ‘soundcorrs’ object above, or the entire ‘soundchange’ objects can be loaded using ‘loadSampleDataset()’ (see below). Note that these sample changes are stored as pieces of R code, so they must be loaded using ‘source()’ rather than ‘read.table’ or similar.
+
+```{r}
+# a simple sound change
+sc.V2a <- soundchange ("V > a", "V>a", trans.com, "All vowels change into a.")
+
+# basic summary
+sc.V2a
+
+# ‘name’ is the name of the sound change
+# ‘desc’ is a brief description
+# ‘fun’ is the sound change function
+# ‘trans’ is the transcription used in the change function
+str (sc.V2a, max.level=1)
+
+# if need be, functions inside ‘soundchange’ objects can be applied directly
+sc.V2a$fun ("ouroboros", NULL)
+
+# a slightly more complex change
+sc.VV2a <- soundchange ("V{2,} > a", "VV>a", trans.com, "Only diphthongs change into a.")
+sc.VV2a$fun ("ouroboros", NULL)
+
+# a slightly more complex change
+sc.CV2Ca <- soundchange ("(C)V > \\1a", "CV>Ca", trans.com, "Only postconsonantal vowels change into a.")
+sc.CV2Ca$fun ("ouroboros", NULL)
+
+# a more complex sound change
+sc.2ndV2a.fun <- function (x, meta) {
+    tmp <- gregexpr (expandMeta(trans.com,"V+"), x)
+    regmatches(x,tmp)[[1]][2] <- "a"
+    return (x)
+}
+sc.2ndV2a <- soundchange (sc.2ndV2a.fun, "2ndV>a", trans.com,
+    "Only the vowel in the second syllable changes into a.")
+sc.2ndV2a$fun ("ouroboros", NULL)
 ```
 
 
@@ -407,7 +460,7 @@ As with ‘multiFit()’, the return value of ‘fitTable()’ is a list of the 
 
 ```{r}
 # prepare the data
-dataset <- coocc (sampleSoundCorrsData.abc)
+dataset <- coocc (d.abc)
 
 # prepare the models to be tested
 models <- list (
@@ -420,6 +473,45 @@ fit <- fitTable (models, dataset, 1, vec2df.hist)
 
 # inspect the results
 summary (fit, metric="sigma")
+```
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
+
+
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+<!-- sound changes ------------------------------------------------------------------------------- {{{ -->
+## Sound changes
+
+
+Currently, ‘soundcorrs’ offers only one function related to sound changes. It is ‘applyChanges()’, and it can be used to automatically apply a series of changes to a series of words.
+
+<!-- applyChanges() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -{{{ -->
+### applyChanges()
+
+
+‘applyChanges()’ does what its name suggests: it applies a series of sound changes to a series of words. It takes up to four arguments: ‘data’ which is a vector of character strings to which the changes will be applied; ‘changes’, a list of ‘soundchange’ objects; ‘target’, a vector of character strings of the same length as ‘data’, to which the results will be compared; and ‘meta’, a vector of the same length as ‘data’, which will be passed on to ‘soundchange’ functions.
+
+The return value of ‘applyChanges()’ is a list, technically of class ‘list.applyChanges’, which contains three elements: ‘end’, the final results of the application of sound changes (this is the only element that is printed by default); ‘match’ which is a named list of the results of comparison to ‘target’; and ‘tree’ which saves the path by which the final forms in ‘end’ have been arrived at. The values in ‘target’ can be: 0 if none of the results matches ‘target’, 0.5 if at least one but not all of the results match ‘target’, and 1 if all the results match ‘target’.
+
+```{r}
+# prepare a list of changes, in the order of application
+sc.list <- list (sc.VV2a, sc.2ndV2a, sc.CV2Ca)
+
+# prepare the data and the expected results
+data <- c ("ouroboros", "jormungandr")
+target <- c ("arabaras", "jarmangandr")
+
+# and apply the changes to our data
+res <- applyChanges (data, sc.list, target, meta=NULL)
+res
+
+# see if they match the expectations
+res$match
+
+# see which change did not work as expected
+#    it was CV > Ca because our changes use the sample "common" transcription,
+#    and j does not count in it as a consonant (it's a semivowel)
+res$tree
 ```
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
@@ -475,18 +567,24 @@ binTable (tab, rows, cols)
 ### expandMeta()
 
 
-Metacharacters defined in the transcription (“wildcards”) can be used inside a ‘findPairs()’ query, but they can also be used with ‘grep()’ or any other function. ‘expandMeta()’ is a little function that translates them into regular expressions that vanilla R can understand.
+Metacharacters defined in the transcription (“wildcards”) can be used inside sound changes, as well as inside a ‘findExamples()’ or a ‘findPairs()’ query, but they can also be used with ‘grep()’ or any other function. The only difference is that the first three functions automatically make a call to ‘expandMeta()’ in order to translate those metacharacters into regular expressions that vanilla R can understand, while for ‘grep()’, or any other function from outside ‘soundcorrs’, the user needs to make an explicit call to ‘expandMeta()’.
+
+Beside the metacharacters defined in the transcription, ‘expandMeta()’ can also understand ‘binary notation’, i.e. an enumeration of distinctive features such as "[+cons,-stop]". The condition is that the enumeration must be enclosed in square brackets, it must contain the same features as are used in the VALUE column in the transcription, each feature must have a "+" or "-" sign in front of it, the features must be separated by commas, and there can be no spaces inside the brackets. Should any of those rules be broken, the would-be wildcard will be kept in the query string as is, and will surely fail to produce any match in the search.
 
 ```{r}
 # let us search a column other than the one specified as ‘aligned’
 orth <- d.abc$data [, "ORTHOGRAPHY.L2"]
 
 # look for all VCC sequences
-query <- expandMeta(d.cap$trans[[1]],"VCC")
+query <- expandMeta (d.cap$trans[[1]], "VCC")
 orth [grep(query,orth)]
 
 # look for all VCC words
-query <- expandMeta(d.cap$trans[[1]],"^VCC$")
+query <- expandMeta (d.cap$trans[[1]], "^VCC$")
+orth [grep(query,orth)]
+
+# the same in the binary notation
+query <- expandMeta (d.cap$trans[[1]], "^[+vow][+cons][+cons]$")
 orth [grep(query,orth)]
 ```
 
@@ -557,6 +655,28 @@ attr (chisq$a, "warning")
 
 # this warning often means that the data were insufficient
 tabs$a
+```
+
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
+<!-- loadSampleDataset() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
+### loadSampleDataset()
+
+
+Due to technical limitations of R and CRAN, primarily to do with encoding, sample datasets provided by ‘soundcorrs’ cannot be stored in the preloaded form (non-ASCII characters). They also cannot be automatically loaded when ‘soundcorrs’ is attached (staged install prevents this kind of usage of ‘system.file()’), and they cannot be included in full in the source files, even when Unicode characters are escaped because Windows do not know how to convert those to native encoding. It seems that the only half-convenient way of making Unicode datasets available is through a separate function that can load them on user’s request. ‘loadSampleDataset()’ is such a function.
+
+It only takes one argument, ‘x’, which can take one of the following values:
+
+* ‘soundchange’s: ‘change-dl2l’ (the \*_l_, \*_dl_ > \*_l_ merger in Slavic, regressively), ‘change-palatalization’ (the first palatalization in Slavic, progressively), ‘change-rhotacism’ (rhotacism in Latin, progressively);
+* ‘soundcorrs’: ‘data-abc’ (entirely made up), ‘data-capitals’ (EU capitals in German, Polish, and Spanish), ‘data-ie’ (a dozen Indo-European examples from Campbell’s _Historical Linguistics_, see above);
+* ‘transcription’: ‘trans-common’ (a fragment of the traditional continental transcription), ‘trans-ipa’ (a fragment of the IPA).
+
+```{r}
+# load a transcription
+tmp <- loadSampleDataset ("trans-common")
+
+# it's the same that we've already loaded above
+identical (tmp, trans.com)
 ```
 
 

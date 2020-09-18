@@ -20,6 +20,12 @@ formatter.html(what, x, direction = 1)
 A formatter for \code{\link{allPairs}}. This one formats to HTML.
 }
 \examples{
-dataset <- sampleSoundCorrsData.abc
+# prepare sample dataset
+fTrans <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
+fData <- system.file ("extdata", "data-capitals.tsv", package="soundcorrs")
+tmp.ger <- read.soundcorrs (fData, "German", "ALIGNED.German", fTrans)
+tmp.pol <- read.soundcorrs (fData, "Polish", "ALIGNED.Polish", fTrans)
+dataset <- merge (tmp.ger, tmp.pol)
+# run allPairs
 allPairs (dataset, unit="o", formatter=formatter.html)
 }

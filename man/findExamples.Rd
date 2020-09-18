@@ -4,7 +4,8 @@
 \alias{findExamples}
 \title{Find all pairs/triples/... with corresponding sequences of sounds.}
 \usage{
-findExamples(data, ..., distance.start, distance.end, na.value, zeros, cols)
+findExamples(data, ..., distance.start, distance.end, na.value, zeros,
+  cols)
 }
 \arguments{
 \item{data}{[soundcorrs] The dataset in which to look.}
@@ -15,7 +16,7 @@ findExamples(data, ..., distance.start, distance.end, na.value, zeros, cols)
 
 \item{distance.end}{[integer] The allowed distance between segments where the sound sequences end. A negative value means alignment of the end of sequences will not be checked. Defaults to -1.}
 
-\item{na.value}{[numeric] Treat \code{NA}’s as matches (\code{0}) or non-matches (\code{-1})? Defaults to \code{0}.}
+\item{na.value}{[numeric] Treat \code{NA}'s as matches (\code{0}) or non-matches (\code{-1})? Defaults to \code{0}.}
 
 \item{zeros}{[logical] Take linguistic zeros into account? Defaults to \code{FALSE}.}
 
@@ -27,23 +28,30 @@ findExamples(data, ..., distance.start, distance.end, na.value, zeros, cols)
 \description{
 Sift the dataset for word pairs/triples/... such that the first word in the first languages contains the first sequence, the one in the second language the second sequence, and so on.
 }
+\details{
+One of the more time-consuming tasks, when working with sound correspondences, is looking for specific examples which realize the given correspondence. \code{findExamples} can fully automate this process. It has several arguments that can help fine-tune the search, of which perhaps the most important are \code{distance.start} and \code{distance.end}. It should be noted that their default values (\code{-1} for both) mean that \code{findExamples} will find every such pair/triple/... of words, that the first word contains the first query, the second word the second query, etc. -- regardless of whether these segments do in fact correspond to each other in the alignment. This is intentional, and stems from the assumption that in this case, false positives are generally less harmful, and most of all easier to spot than false negatives.
+
+\code{findExamples} accepts regular expressions in queries, both such as are available in pure R, and such as have been defined in the \code{\link{transcription}}, in both notations accepted by \code{\link{expandMeta}}. It is highly recommended that the user acquaints him or herself with the concept, as it is in it that the true power of \code{findExamples} lies.
+}
 \examples{
 # In the examples below, non-ASCII characters had to be escaped for technical reasons.
 # In the actual usage, Unicode is supported under BSD, Linux, and macOS.
-dataset <- sampleSoundCorrsData.capitals
-# Find examples which have "a" in all three languages.
+
+# prepare sample dataset
+dataset <- loadSampleDataset ("data-capitals")
+# find examples which have "a" in all three languages
 findExamples (dataset, "a", "a", "a")
-# Find examples where German has schwa, and Polish and Spanish have a Vr sequence.
-findExamples (dataset, "\u0259", "Vr", "Vr")
-# Find examples where German has a-umlaut, Polish has a or e, and Spanish has any sound at all.
-findExamples (dataset, "\u00E4", "[ae]", "")
-# Find examples where German has a linguistic zero while Polish and Spanish do not.
+# find examples where German has schwa, and Polish and Spanish have a Vr sequence
+findExamples (dataset, "\\u0259", "Vr", "Vr")
+# find examples where German has a-umlaut, Polish has a or e, and Spanish has any sound at all
+findExamples (dataset, "\\u00E4", "[ae]", "")
+# find examples where German has a linguistic zero while Polish and Spanish do not
 findExamples (dataset, "-", "[^-]", "[^-]", zeros=TRUE)
-# Find examples where German has schwa, and Polish and Spanish have a.
-findExamples (dataset, "\u0259", "a", "a", distance.start=-1, distance.end=-1)
-# As above, but the schwa and the two a's must be in the same segment.
-findExamples (dataset, "\u0259", "a", "a", distance.start=0, distance.end=0)
+# find examples where German has schwa, and Polish and Spanish have a
+findExamples (dataset, "\\u0259", "a", "a", distance.start=-1, distance.end=-1)
+# as above, but the schwa and the two a's must be in the same segment
+findExamples (dataset, "\\u0259", "a", "a", distance.start=0, distance.end=0)
 }
 \seealso{
-\code{\link{findPairs}}.
+\code{\link{findPairs}}
 }
