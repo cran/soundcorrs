@@ -1,12 +1,17 @@
 ---
-title: "soundcorrs: Semi-Automatic Analysis of Sound Correspondences (v0.3.0)"
-author: "Kamil Stachowski"
-date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+title: "soundcorrs: Semi-Automatic Analysis of Sound Correspondences (v0.4.0)"
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float:
+      collapsed: true
+      smooth_scroll: true
+    theme: spacelab
 vignette: >
-  %\VignetteIndexEntry{soundcorrs: Semi-Automatic Analysis of Sound Correspondences (v0.3.0)}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+    %\VignetteIndexEntry{soundcorrs: Semi-Automatic Analysis of Sound Correspondences (v0.4.0)}
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include = FALSE}
@@ -17,51 +22,207 @@ knitr::opts_chunk$set(
 ```
 
 <!-- introduction ================================================================================ {{{ -->
+# Introduction{#intro}
 
 
-‘soundcorrs’ is a small package whose purpose is to help linguists analyse sound correspondences between languages. It does not attempt to draw any conclusions on its own; this responsibility is placed entirely on the user. ‘soundcorrs’ merely automates and facilitates certain tasks, such as preparing the material part of the paper, looking for examples of specific correspondences, or applying series of sound changes, and, by making various functions available, suggests possible paths of analysis which may not be immediately obvious to the more traditional linguist.
+_soundcorrs_ is a small package whose purpose is to help linguists analyse sound correspondences between languages. It does not attempt to draw any conclusions on its own; this responsibility is placed entirely on the user. _soundcorrs_ merely automates and facilitates certain tasks, such as preparing the material part of the paper, looking for examples of specific correspondences, or applying series of sound changes, and, by making various functions available, suggests possible paths of analysis which may not be immediately obvious to the more traditional linguist.
 
-This vignette assumes that the reader not only is a linguist and has at least a general idea about what kind of outputs he or she might want from ‘soundcorrs’, but also has at least a passing familiarity with R and a basic understanding of statistics. Most problems can probably be read up on as they appear in the text, but it is nevertheless recommended to start by very briefly acquainting oneself with R by reading the first page of maybe [Quick-R](https://www.statmethods.net/r-tutorial/index.html), [R Tutorial](http://www.r-tutor.com/r-introduction), or another R primer. In particular, it is assumed that the reader will know how to access and understand the built-in documentation, as not all of the arguments are discussed here. Another topic that is highly recommended, as without it ‘soundcorrs’ cannot be used to its full potential, are regular expressions. An accessible introduction can be found in R.D. Peng’s [_R Programming for Data Science_](https://bookdown.org/rdpeng/rprogdatascience/regular-expressions.html), as well as in many other places around the Internet, and a handy [cheat sheet](https://rstudio.com/wp-content/uploads/2016/09/RegExCheatsheet.pdf) has been made available by [RStudio](https://rstudio.com).
+There are two ways to access _soundcorrs_: the command line interface (CLI), and the graphical user interface (GUI). Whether you use the R console, [RStudio](https://rstudio.com/), or some other IDE, this is the CLI. It is by far more flexible and powerful, but also more demanding. To switch to the GUI, simply run `soundcorrsGUI()`. As of the current version, it provides access to the most important of _soundcorrs_ functions, but not to all of _soundcorrs_ functions. Enhancements are planned for future releases but it is rather unlikely that the GUI should ever fully match the CLI.
 
-Though a little dated by now, a less technical introduction to ‘soundcorrs’ is also available in Stachowski K. 2020. Tools for Semi-Automatic Analysis of Sound Correspondences: The _soundcorrs_ Package for R. _Glottometrics_ 49. 66–86. If you use ‘soundcorrs’ in your research, please cite this paper.
+In this vignette, references to the CLI are formatted `like this`, whereas references to the GUI are given in quotes ‘like so’. Except for the last one, each chapter begins with a general introduction, which is followed by a detailed description of how the given functionality can be accessed via the CLI and via the GUI.
 
-The first section of this vignette discusses in short how to prepare data for ‘soundcorrs’. The second section is an overview of all the analytic functions exported by ‘soundcorrs’ organized by their output, and of helper functions in the alphabetical order.
+The CLI parts assume that the reader is has at least a passing familiarity with R and a basic understanding of statistics. Most problems can probably be read up on as they appear in the text, but it is nevertheless recommended to start by very briefly acquainting oneself with R by reading the first page of maybe [Quick-R](https://www.statmethods.net/r-tutorial/index.html), [R Tutorial](http://www.r-tutor.com/r-introduction), or another R primer. In particular, it is assumed that the reader will know how to access and understand the in-built documentation (run `?nameOfTheFunction`), as not all of the arguments are discussed here.
 
-‘soundcorrs’ functions operate on pairs/triples/… of words which come from different languages. The discussion below will use ‘L1’ to refer to the first language in the dataset, ‘L2’ to the second, etc.
+Another topic that is highly recommended, as without it _soundcorrs_ cannot be used to its full potential, are regular expressions. This is equally true for both CLI and GUI users. An accessible introduction can be found in R.D. Peng’s [_R Programming for Data Science_](https://bookdown.org/rdpeng/rprogdatascience/regular-expressions.html), as well as in many other places on the Internet, and a handy [cheat sheet](https://rstudio.com/wp-content/uploads/2016/09/RegExCheatsheet.pdf) has been made available by [RStudio](https://rstudio.com). Besides regular expressions that are well-known to programmers, _soundcorrs_ makes available regular expressions and metacharacters that originate from linguistics. Two flavours are available: traditional wild-cards such as ‹V› for ‘any vowel’, and more modern binary notation such as ‹[+vowel]› for the same. More on those can be found in subsection [Transcription](#prep-trans).
 
-Naturally, all the examples given below assume that ‘soundcorrs’ is installed and loaded:
+Though a little dated by now, a less technical introduction to _soundcorrs_ is also available in Stachowski K. 2020. Tools for Semi-Automatic Analysis of Sound Correspondences: The _soundcorrs_ Package for R. _Glottometrics_ 49. 66–86. If you use _soundcorrs_ in your research, please cite this paper.
 
+_soundcorrs_ functions operate on pairs/triples/… of words which come from different languages. The discussion below will use _L1_ to refer to the first language in the dataset, _L2_ to the second, etc.
+
+Naturally, all the examples in this vignette assume that _soundcorrs_ is installed and loaded:
+
+```{r eval=FALSE}
+install.packages ("soundcorrs")
+```
 ```{r}
-# install.packages ("soundcorrs")
 library (soundcorrs)
 ```
+
+If you found a bug, have a remark about _soundcorrs_, or wishes for its future releases, please write to kamil.stachowski@gmail.com. If you use _soundcorrs_ in your research, please cite it as Stachowski K. 2020. Tools for Semi-Automatic Analysis of Sound Correspondences: The _soundcorrs_ Package for R. _Glottometrics_ 49. 66–86
 
 
 <!-- ============================================================================================= }}} -->
 <!-- data preparation ============================================================================ {{{ -->
-# Data preparation
+# Data preparation{#prep}
 
 
-Whether you intend to use ‘soundcorrs’ for analysis of sound correspondences or sound changes, you will need to define a transcription. For sound correspondences, you will additionally need to segment and align word pairs/triples/…, and for sound changes, define the sound changes. Transcription and word pairs/triples/… are stored in tsv files, i.e. as tab-separated tables in text files. Sound changes are functions, so they are stored as R code.
+_soundcorrs_ uses three kinds of data: transcription, linguistic datasets, and sound changes. The first two are stored in .tsv file, i.e. as tab-separated tables in text files that can be edited with a spreadsheet editor such as [LibreOffice Calc](https://www.libreoffice.org/discover/calc) or [Google Sheets](https://docs.google.com/spreadsheets?usp=direct_url), or with a programming editor. Sound changes are functions, so they are stored as R code in text files.
 
-Under BSD, Linux, and macOS, the recommended encoding is UTF-8. Unfortunately, it has been found to cause problems under Windows, so Windows users are advised to not use characters outside of the ASCII standard. Some issues can be fixed by converting from UTF-8 to UTF-8 (sic!) with ‘iconv()’, but others resist this and other treatments. Future versions of ‘soundcorrs’ hope to include a solution for this problem.
+Several sample datasets are available. In the GUI, they are loaded automatically when the GUI is started. From the CLI, they can be loaded using the `loadSampleDataset()` function, and the raw files can be accessed via the `system.file()` function; both are explained below in more detail.
 
-<!-- transcription ------------------------------------------------------------------------------- {{{ -->
-## Transcription
+Under BSD, Linux, and macOS, the recommended encoding is UTF-8. Unfortunately, it has been found to cause problems under Windows, so Windows users are advised to not use characters outside of the ASCII standard. Some issues can be fixed by converting from UTF-8 to UTF-8 (sic!) with `iconv()`, but others resist this and other treatments. Future versions of _soundcorrs_ hope to include a solution for this problem.
+
+<!-- transcription - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
+### Transcription{#prep-trans}
 
 
-Transcription is not strictly necessary for the very functioning of ‘soundcorrs’, but without it linguistic regular expresssions (“wildcards”) could not be defined, and involvement of phonetics in the analysis would be made more difficult. Transcription is stored in tsv files with two or three columns:
+Transcription is not strictly necessary for the very functioning of _soundcorrs_, but without it linguistic regular expresssions (“wildcards”) could not be defined, and involvement of phonetics in the analysis would be made more difficult. Transcription is stored in .tsv files with two or three columns:
 
-* GRAPHEME, which contains the graphemes. Characters used by R as metacharacters in regular expressions, i.e. . + * ^ \ $ ? | ( ) [ ] { }, are not allowed. Multigraphs also should not be used as they can lead to unexpected and incorrect results, especially in the case metacharacters (“wildcards”).
+* GRAPHEME, which contains the graphemes. Characters used by R as metacharacters in regular expressions, i.e. _. + * ^ \ $ ? | ( ) [ ] { }_, are not allowed. Multigraphs are also advised against as they could potentially lead to unexpected and incorrect results, especially in the case metacharacters (“wildcards”).
 
-* VALUE, which contains a comma-separated list of features of the given grapheme. These are intended to be phonetic but do not necessarily have to be so. If the column META is missing, it is generated based on the column VALUE.
+* VALUE, which contains a comma-separated list of features of the given grapheme (without spaces). These are intended to be phonetic but do not necessarily have to be so. If the column META is missing, it is generated based on the column VALUE.
 
-* META, which contains a regular expression covering all the graphemes the given grapheme is meant to represent. In regular graphemes, this is simply the grapheme itself. In a metacharacter, such as ‘C’ for ‘any consonant’, this needs to be a listing of all consonantal graphemes in the transcription file, formatted as a regular expression. It is recommended to leave this column empty, as in such case ‘soundcorrs’ will generate it automatically. Beware, however, that in this process any grapheme whose value is a subset of the value of another grapheme, will become a metacharacter for that other grapheme.
+* META, which contains a regular expression covering all the graphemes the given grapheme is meant to represent. In regular graphemes, this is simply the grapheme itself. In a metacharacter (a “wildcard”), such as ‹C› for ‘any consonant’, this needs to be a listing of all consonantal graphemes in the transcription file, formatted as a regular expression. If this column is missing, _soundcorrs_ will generate it automatically based on the VALUE column. Beware, however, that in this process any grapheme whose value is a subset of the value of another grapheme, will become a metacharacter for that other grapheme.
 
-‘soundcorrs’ contains two sample transcription files: ‘trans-common.tsv’ and ‘trans-ipa.tsv’. Both only cover the basics and are intended more as an illustration than anything else. The paths of the data files can be established with ‘system.file()’ as in the snippet below, or the entire ‘transcription’ objects can be loaded using ‘loadSampleDataset()’ (see below).
+A small transcription file may look as follows:
+
+| GRAPHEME	| VALUE						| META	|
+|:----------|:--------------------------|:------|
+| b			| const,stop,lab,vd			| b		|
+| p			| const,stop,lab,vl,mark1	| b		|
+| f			| const,fric,lab,vl,mark1	| b		|
+| B			| const,stop,lab			| [pb]	|
+| P			| mark1						| [pf]	|
+| -			| NULL						| -		|
+
+In the last row, is what is called in this vignette a _linguistic zero_. This character does not represent any sound. It doesn’t merely not represent any sound, though, it actively represents no sound. Its use will be made clear in subsection [Linguistic datasets](#prep-data) below. Every transcription must include a linguistic zero.
+
+The combination of columns VALUE and META is what allows the use of traditional linguistic regular expressions. _soundcorrs_ supports two types of such expressions: the traditional notation, and the more modern binary notation. The former are typically single characters, often upper case, that denote an entire class of sounds, such as ‹C› for ‘any consonant’. They can be defined either by listing all the characters they stand for in the META column (as a regular expression) or, since that column is optional, by giving them a VALUE that is a subset of the values of other graphemes. ‹B› and ‹P› in the sample transcription above are defined using both methods simultaneously. The binary notation, such as ‹[+cons,-stop]› for ‘any non-stop consonant’ does not need to be defined. It is just required that it is enclosed in square brackets, the features are comma-separated, without spaces, each feature is prepended with a ‹+› or ‹-›, and the features are the same as are used in the transcription.
+
+In the GUI, on the ‘Data’ page, click the ‘View’ button below the ‘Select the transcription…’ field on the right side of the top row, to view one of the sample transcriptions included in _soundcorrs_.
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
+<!-- linguistic datasets - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
+### Linguistic datasets{#prep-data}
+
+
+Like the transcription, linguistic datasets are also stored in .tsv files. Two formats are theoretically possible: the “long format” in which every word is given its own row, and the “wide format” in which one row holds a pair/triple/… of words. The former is certainly more convenient for manual alignment (below), but it is the latter that is used internally and required by _soundcorrs_. Functions `long2wide()` and `wide2long()` can be used to convert between the two formats.
+
+With the notable exception of sound changes, words need to be segmented for most tasks in _soundcorrs_, and all words in a pair/triple/… must have the same number of segments. The default segment separator is `"|"`. If the words are not segmented, the function `addSeparators()` can be used to facilitate the process of manual segmentation and alignment. Tools for automatic alignment also exist (e.g. [alineR](https://CRAN.R-project.org/package=alineR), [LingPy](http://lingpy.org/), [PyAline](http://pyaline.sourceforge.net/)), but it is recommended that their results be thoroughly checked by a human, if for no other reason than to allow the researcher to acquaint themselves with the material and its specificity. Alignment is what necessitates the inclusion of linguistic zero in a transcription; the examples below should make this clear. Apart from the segmented and aligned form, each word must be assigned a language.
+
+Hence, the two obligatory columns in the “long format” are:
+
+* ALIGNED which holds the segmented and aligned word, and
+
+* LANGUAGE which holds the name of the language.
+
+In the “wide format”, similarly, a minimum of two columns is necessary, each holding words from a different language. The information about which column holds which language can then be encoded simply as column names (e.g. ‘LATIN’), or in the form of a suffix attached to the names (e.g. ‘ALIGNED.Latin’).
+
+A sample dataset in the “long format” might look as follows:
+
+| LANGUAGE	| WORD		| ALIGNED					|
+|:----------|:----------|:--------------------------|
+| Latin		| mūsica	| m\|-\|ū\|s\|i\|k\|a		|
+| English	| music		| m\|j\|ū\|z\|i\|k\|-		|
+| German	| Musik		| m\|-\|u\|z\|ī\|k\|-		|
+| Polish	| muzyka	| m\|-\|u\|z\|y\|k\|a		|
+|			|			|							|
+| Latin		| prōvincia	| p\|r\|ō\|v\|i\|n\|s\|i\|a	|
+| English	| province	| p\|r\|ɒ\|v\|i\|n\|s\|-\|-	|
+| German	| Provinz	| p\|r\|o\|v\|i\|n\|c\|-\|-	|
+| Polish	| prowincja	| p\|r\|o\|v\|i\|n\|c\|j\|a	|
+
+which might corresponds to a dataset in the “wide format” which looks as follows:
+
+| WORD.LAT	| ALIGNED.LAT				| WORD.ENG	| ALIGNED.ENG				| WORD.GER	| ALIGNED.GER				| WORD.POL	| ALIGNED.POL				|
+|:----------|:--------------------------|:----------|:--------------------------|:----------|:--------------------------|:----------|:--------------------------|
+| mūsica	| m\|-\|ū\|s\|i\|k\|a		| music		| m\|j\|ū\|z\|i\|k\|-		| Musik		| m\|-\|u\|z\|ī\|k\|-		| muzyka	| m\|-\|u\|z\|y\|k\|a		|
+| prōvincia	| p\|r\|ō\|v\|i\|n\|s\|i\|a	| province	| p\|r\|ɒ\|v\|i\|n\|s\|-\|-	| Provinz	| p\|r\|o\|v\|i\|n\|c\|-\|-	| prowincja	| p\|r\|o\|v\|i\|n\|c\|j\|a	|
+
+In these examples, the segmentation is on a phoneme-to-phoneme basis but any other criterion could be used, depending on the needs of the analysis. It is perfectly acceptable to have more than one character in a segment, and it is likewise acceptable to have in one file multiple segmented columns, one designated as the `ALIGNED` column in one `soundcorrs` object, and another in the second. It is also possible, though such practice is not encouraged, to store the data from different languages in separate files, and encoded using different transcriptions. As of the current version, however, this is only achievable through the CLI.
+
+It may sometimes be the case that one of the words in a pair/triple/… is missing but it is still desirable to include such an incomplete case in the dataset. The missing word should be written as `NA`, which is R’s symbol for ‘missing value’.
+
+In the GUI, on the ‘Data’ page, click the ‘View’ button below the ‘Loaded datasets’ field on the right side of the middle row, to view one of the sample datasets included in _soundcorrs_.
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
+<!-- sound changes - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
+### Sound changes{#prep-chngs}
+
+
+Unlike transcriptions and linguistic datasets, sound changes in _soundcorrs_ are functions, bits of code. (The distinction between data and code is in fact less than sharp in R, but this is a separate topic.) This gives the user much greater control, while remaining convenient because simple sound changes can be translated automatically.
+
+A sound change function must take two arguments: `x` and `meta`, where `x` is a character string to which the change is to be applied, and `meta` is a piece of metadata that might need to be taken into account. The return value of a sound change function must be a vector of character strings, possibly of length 1, i.e. a single character string. The ability to output multiple strings, however, is important because it allows for the implementation of regressive changes (e.g. to account for both possible sources of a vowel that merged with another vowel).
+
+Such functions may look as follows:
+
+```{r eval=FALSE}
+# change all a’s to e’s
+function (x,meta)
+	gsub ("a", "e", x)
+
+# change a’s followed by j, to e’s – version 1
+function (x, meta)
+	gsub ("aj", "ej", x)
+
+# change a’s followed by j, to e’s – version 2
+function (x, meta)
+	gsub ("a(?=j)", "e", x, perl=T)
+
+# change a’s and ä’s to e’s
+function (x, meta)
+	gsub ("[aä]", "e", x)
+
+# change a’s to e’s only in the northern dialect
+function (x, meta)
+	if (meta!="northern") x else gsub("a","e",x)
+
+# change a in the last syllable to e
+function (x, meta) {
+
+	# find all the vowels
+	#  this assumes that 'trans' is a transcription object,
+	#    in which "V" is defined as a wild-card for 'all vowels'
+	#  alternatively, a square bracket notation could be used here,
+	#    similarly to the example above
+	syllables <- gregexpr (expandMeta(trans,"V"), x)
+
+	# find how many syllables x has
+	last <- length (syllables[[1]])
+
+	# replace a in the last one
+	if (regmatches(x,syllables)[[1]][last] == "a")
+		regmatches(x,syllables)[[1]][last] <- "e"
+
+	# return the changed string
+	return (x)
+
+}
+```
+
+Simpler changes, ones that can be written in the form of a single regular expression like the first four examples above, need not be explicitly defined as functions. A sound change function is generally not expected to be used directly by the user, it is intended to be wrapped in a `soundchange` object using the `soundchange()` constructor function, and this function accepts both functions and character strings; the latter are then converted into functions automatically. Such a string must contain exactly one `">"` or `"<"`, possibly surrounded by spaces.
+
+<div style="border-radius: 5px; padding: 20px;">
+_Warning!_ When the META column is missing from the transcription and generated automatically, the alternatives are listed using round- rather than square-bracket notation, i.e. as `(x|y)` rather than `[xy]`. This is necessary because some graphemes may be longer than one character, but a side effect of this is that when a user-defined metacharacter (“wild-card”) is used in the ‘find’ part of the sound change string (the part before `"<"`), it adds a set of round brackets to that part of the string. In turn, this means that backreferences in the ‘replace’ part of the sound change string must either be shifted accordingly, or round brackets around metacharacters in the ‘find’ part omitted. For example, if intervocalic _s_ is to be replaced with _r_, the sound change string should be `"VsV > \\1r\\2"` rather than \*`"(V)s(V) > \\1r\\2"` because `"V"` itself is already translated to `"(a|ä|e|…"`.
+</div>
+
+The one instance when a sound change function is intended to be run directly by the user, is during testing. It is highly recommended that each function be tested on a variety of examples, with the intent of finding the one case which makes it fail to produce the desired result.
+
+Apart from the function itself, a `soundchange` object holds the name and a brief description of the change, as well as the transcription that was used to encode it. The transcription is necessary to translate user’s custom regular expression (as `"V"` in the last example above, see subsection [Transcription](#prep-trans) above for more details) into expressions that R can understand. A more detailed explanation of the `soundchange()` constructor can be found in subsection [Sound changes](#load-chngs) below.
+
+In the GUI, on the ‘Data’ page, click the ‘View’ button below the ‘Loaded changes’ field on the right side of the bottom row, to view one of the sample changes included in _soundcorrs_.
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
+
+<!-- ============================================================================================= }}} -->
+<!-- loading data ================================================================================ {{{ -->
+# Loading data{#load}
+
+
+Once the data are ready, they can be loaded either with the help of the CLI or the GUI. The former is more customizable and offers more possibilities, but the latter is less cumbersome.
+
+<!-- transcription - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
+### Transcription{#load-trans}
+
+
+In the **GUI**, transcriptions can be loaded simply by clicking on the ‘Browse’ button on the left side of the top row of the ‘Data’ page. Accepted are files are in the .tsv format; they need to contain columns GRAPHEME and VALUE, and might additionally contain the column META, as discussed in subsection [Transcription](#prep-trans) above.
+
+In the **CLI**, transcriptions are loaded using the `read.transcription()` function. It is a simple wrapper around the constructor function for the `transcription` class, which reads a data table and passes it to the constructor. It is, however, recommended to use `read.transcription()`, rather than directly the constructor, because `read.transcription()` adds to the object the attribute `file` with the path to the original file. This path can be later used to make sure that the linguistic dataset or a sound change uses the correct transcription.
+
+_soundcorrs_ contains two sample transcription files: 1. a fragment of the traditional, ‘continental’ transcription: ‘trans-common.tsv’ and 2. a fragment of the IPA: ‘trans-ipa.tsv’. Both only cover the basics and are intended more as an illustration than anything else. In the GUI, they are loaded automatically, and can be previewed using the ‘View’ button. In the CLI, the paths to the raw files can be established through `system.file("extdata", "nameOfTheFile", package="soundcorrs")`, and the entire `transcription` objects can be loaded using `loadSampleDataset()` with either `"trans-common"` or `"trans-ipa"` as argument.
 
 ```{r}
-# establish the paths of the samples included in ‘soundcorrs’
+# establish the paths of the samples included in soundcorrs
 path.trans.com <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
 path.trans.ipa <- system.file ("extdata", "trans-ipa.tsv", package="soundcorrs")
 
@@ -83,29 +244,18 @@ trans.com
 str (trans.com, max.level=1)
 ```
 
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
+<!-- linguistic datasets - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
+### Linguistic datasets{#load-data}
 
-<!-- --------------------------------------------------------------------------------------------- }}} -->
-<!-- data ---------------------------------------------------------------------------------------- {{{ -->
-## Data
 
+Loading datasets is a little bit complex, an unfortunate side effect of flexibility. This is considerably more pronounced in the CLI than in the GUI.
 
-Like the transcription, the data are also stored in tsv files. Two formats are theoretically possible: the “long format” in which every word is given its own row, and the “wide format” in which one row holds a pair/triple/… of words (see below).
+In the **GUI**, a file containing the dataset is selected through the ‘Browse’ button on the left of the middle row of the ‘Data’ page. Once a file containing a valid dataset in the “wide format” is selected (cf. subsection [Linguistic datasets](#prep-data) above), a series of checkboxes appears in the centre of the middle row. It contains the names of columns in the file, and the user is asked to select those columns which contain the aligned and segmented pairs/triples/… of words. As was mentioned above, alignment and segmentation are two time-consuming steps that can be skipped if _soundcorrs_ is only used for sound changes and nothing else. When ready, click the ‘Load’ button below. Note that the data from all the languages will be assigned the transcription that was currently selected on the right side of the top row.
 
-With the notable exception of sound changes, words need to be segmented for most tasks in ‘soundcorrs’, and all words in a pair/triple/… must have the same number of segments. The default segment separator is ‘|’. If the words are not segmented, the function ‘addSeparators()’ can be used to facilitate the process of manual segmentation and alignment (see below). Tools for automatic alignment also exist (e.g. [alineR](https://CRAN.R-project.org/package=alineR), [LingPy](http://lingpy.org/), [PyAline](http://pyaline.sourceforge.net/)), but it is recommended that their results be thoroughly checked by a human. Apart from the segmented and aligned form, each word must be assigned a language.
+In the **CLI**, datasets are loaded using the `read.soundcorrs()` function which is a wrapper around the constructor function for the `soundcorrs` class. Whenever possible, it is recommended to use the wrapper rather than the constructor function directly. The arguments for the wrapper are: path to the file (in the “wide format”), name of the language, name of the column with segmented, aligned data, path to the transcription file, and optionally, the character used as the segment separator. This amounts to a rather lengthy call, and would amount to an extremely long one if multiple languages were to be loaded simultaneously from different files and with different transcriptions, which is why both `read.soundcorrs()` and the `soundcorrs()` constructor function only load data from a single language at a time. The resulting single-language `soundcorrs` object can then be merged using the `merge()` function. For details about the two functions, see their respective documentations by running `?read.soundcorrs` and `?soundcorrs`.
 
-Hence, the two obligatory columns in the “long format” are
-
-* ALIGNED which holds the segmented and aligned word, and
-
-* LANGUAGE which holds the name of the language.
-
-In the “wide format”, similarly, a minimum of two columns is necessary, each holding words from a different language. The information about which column holds which language can then be encoded simply as column names (e.g. ‘LATIN’), or in the form of a suffix attached to the names (e.g. ‘ALIGNED.Latin’).
-
-Regarding the two formats, see also ‘long2wide()’ and ‘wide2long()’ below.
-
-It is possible, though not necessarily recommended, to store data from each language in a separate file; it is also possible to use a different transcription for each language. This flexibility can easily lead to a somewhat cumbersome string of arguments for the reader function, so the ‘read.soundcorrs’ function is limited to reading the data for just one language. Individual ‘soundcorrs’ objects can be then combined into one using the ‘merge’ function. The reader function only accepts data in the “wide format”.
-
-‘soundcorrs’ has three sample datasets: 1. the entirely made-up ‘data-abc.tsv’; 2. ‘data-capitals.tsv’ which contains the names of EU capitals in German, Polish and Spanish – from the linguistic point of view, this of course makes no sense; it is merely an example that will hopefully not be seen as too exotic regardless of which language or languages the user specializes in (my gratitude is due to José Andrés Alonso de la Fuente, PhD (Cracow, Poland) for help with Spanish data); and 3. ‘data-ie.tsv’ with a dozen examples of Grimm’s and Verner’s laws (adapted from Campbell L. 2013. _Historical Linguistics. An Introduction_. Edinburgh University Press. Pp. 136f). The ‘abc’ dataset is in the “long format”, the ‘capitals’ and ‘ie’ datasets are in the “wide format”. The paths of the data files can be established with ‘system.file()’ as in the snippet below, or the entire ‘soundcorrs’ objects can be loaded using ‘loadSampleDataset()’ (see below).
+_soundcorrs_ has three sample datasets: 1. the entirely made-up ‘data-abc.tsv’; 2. ‘data-capitals.tsv’ which contains the names of EU capitals in German, Polish and Spanish – from the linguistic point of view, this of course makes no sense; it is merely an example that will hopefully not be seen as too exotic regardless of which language or languages the user specializes in (my gratitude is due to José Andrés Alonso de la Fuente, PhD (Cracow, Poland) for help with Spanish data); and 3. ‘data-ie.tsv’ with a dozen examples of Grimm’s and Verner’s laws (adapted from Campbell L. 2013. _Historical Linguistics. An Introduction_. Edinburgh University Press. Pp. 136f). The ‘abc’ dataset is in the “long format” and requires conversion before loading; the ‘capitals’ and ‘ie’ datasets are in the “wide format”. In the GUI, they are converted and loaded automatically, and can be previewed using the ‘View’ button. In the CLI, the paths of the data files can be established with `system.file("extdata", "nameOfTheFile", package="soundcorrs")`, or the entire `soundcorrs` objects can be loaded using `loadSampleDataset()` with `"data-abc"`, `"data-capitals"`, or `"data-ie"` as argument.
 
 ```{r}
 # establish the paths of the two datasets
@@ -145,21 +295,18 @@ d.abc
 str (d.abc, max.level=1)
 ```
 
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
+<!-- sound changes - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
+### Sound changes{#load-chngs}
 
-<!-- --------------------------------------------------------------------------------------------- }}} -->
-<!-- sound changes ------------------------------------------------------------------------------- {{{ -->
-## Sound changes
 
+In the **GUI**, a file containing one or more sound changes is selected through the ‘Browse’ button on the left side of the bottom row of the ‘Data’ page. Accepted are .R files, i.e. files with R code in them, in which one or more `soundchange` objects are created and assigned to variables. This means that, at least as of the current version, there is no escape from the CLI. Definitions of sound changes contain references to transcription; when loading through the GUI, a special variable `..selectedTranscription..` (the dots are part of the name of the variable) is made available; as its name suggests, it points the currectly selected transcription. The same ‘Browse’ button can be used to load a modified set of sound changes saved from the ‘Sound changes’ page (see subsection [Practice](#chngs-pract) in section [Sound changes](#chngs)).
 
-Unlike the transcription and linguistic data, sound changes in ‘soundcorrs’ are in fact bits of code. (The distinction is in fact less than sharp in R, but this is a separate topic.) This gives the user much greater control, while remaining convenient because simple sound changes can be translated automatically.
+In the **CLI**, sound changes are loaded using the constructor function for the `soundchange` class. Its main argument can be either a function or a character string which will be converted to a function. As was mentioned in subsection [Sound changes](#prep-chngs) above, a sound change function must take two arguments: `x`, a string to apply the change to; and `meta`, additional metadata. The return value must be a character string. If instead of a function a string is given, it must be in the format “_x_ > _y_” (or “_y_ < _x_”; spaces optional). Both parts of the string may contain regular expressions, both R’s standard ones, and user’s custom ones (see subsection [Transcription](#prep-trans) above). Lookarounds and other features are disabled by default; they can be turned on by setting the `perl` argument to `TRUE`, but be aware that this also brings about other changes in behaviour; see [this post](https://stackoverflow.com/questions/47240375/regular-expressions-in-base-r-perl-true-vs-the-default-pcre-vs-tre) for a detailed comparison. Also, make sure to see the caveat about round brackets and custom metacharacters in the subsection [Sound changes](#prep-chngs) above.
 
-A sound change function must take two arguments: ‘x’ and ‘meta’, where ‘x’ is a character string to which the change is to be applied, and ‘meta’ is a piece of metadata that might need to be taken into account. The return value of a sound change function must be a vector of character strings, possibly of length 1, i.e. a single character string. The ability to output multiple strings, however, is important because it allows for regressive changes (e.g. to account for both possible sources of a vowel that merged with another vowel).
+Other arguments taken by `soundchange()` are: `name`, `transcription`, and optionally `description` and `perl`. See the documentation (run `?soundchange`) for a more detailed description.
 
-A sound change function is not expected to be used directly by the user. It is intended to be wrapped in a ‘soundchange’ object using the ‘soundchange()’ constructor function. Apart from the function itself, such an object holds the name and a brief description of the change.
-
-Simpler changes, ones that can be written in the form of a single regular expression, need not be explicitly defined as functions. The ‘soundchange()’ constructor accepts both functions and character strings; the latter are then converted into functions automatically. Such a string must contain exactly one ‘>’ or ‘<’, possibly surrounded by spaces.
-
-‘soundcorrs’ contains three sample changes files: ‘change-dl2l.R’, ‘change-palatalization.R’, and ‘change-rhotacism.R’. The paths of the data files can be established with ‘system.file()’ as was done with ‘transcription’ and ‘soundcorrs’ object above, or the entire ‘soundchange’ objects can be loaded using ‘loadSampleDataset()’ (see below). Note that these sample changes are stored as pieces of R code, so they must be loaded using ‘source()’ rather than ‘read.table’ or similar.
+_soundcorrs_ contains three sample changes files: 1. a regressive implementation of the \*_dl_ > \*_l_ simplification in Slavic: ‘change-dl2l.R’; 2. a progressive implementation of the first palatalization in Slavic: ‘change-palatalization.R’; and 3. a progressive implementation of rhotacism in Latin: ‘change-rhotacism.R’. In the GUI, they are loaded automatically, and can be previewed using the ‘View’ button. In the CLI, the paths of the data files can be established with `system.file("extdata", "nameOfTheFile", package="soundcorrs")` as was done with `transcription` and `soundcorrs` object above, or the entire `soundchange` objects can be loaded using `loadSampleDataset()` with `"change-dl2l"`, `"change-palatalization"`, or `"change-rhotacism"` as argument. Note that these sample changes are stored as pieces of R code, so they must be loaded using `source()` rather than `read.table()` or similar.
 
 ```{r}
 # a simple sound change
@@ -182,7 +329,7 @@ sc.VV2a <- soundchange ("V{2,} > a", "VV>a", trans.com, "Only diphthongs change 
 sc.VV2a$fun ("ouroboros", NULL)
 
 # a slightly more complex change
-sc.CV2Ca <- soundchange ("(C)V > \\1a", "CV>Ca", trans.com, "Only postconsonantal vowels change into a.")
+sc.CV2Ca <- soundchange ("CV > \\1a", "CV>Ca", trans.com, "Only postconsonantal vowels change into a.")
 sc.CV2Ca$fun ("ouroboros", NULL)
 
 # a more complex sound change
@@ -196,29 +343,191 @@ sc.2ndV2a <- soundchange (sc.2ndV2a.fun, "2ndV>a", trans.com,
 sc.2ndV2a$fun ("ouroboros", NULL)
 ```
 
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
+
+<!-- ============================================================================================= }}} -->
+<!-- extraction of examples ====================================================================== {{{ -->
+# Extraction of examples{#exam}
+
+
+One of the uses for segmentation and alignment (see subsection [Linguistic datasets](#prep-data) in section [Data preparation](#prep)), is the extraction of examples. Using regular search tools, it is usually easy to find examples which contain a specific sound or sequence of sounds, e.g. all words in L1 that contain _a_, and all words in L2 that contain _e_, but it is virtually impossible to only find such pairs where L1 _a_ is in the same position inside the word as L2 _e_, i.e. where L1 _a_ corresponds to L2 _e_. This is in fact the ‘founding problem’ of _soundcorrs_, the one it was originally written to solve.
+
+<!-- theory -------------------------------------------------------------------------------------- {{{ -->
+## Theory{#exam-theory}
+
+
+The main arguments are naturally the queries. Technically, as many queries need to be given as there are languages in the dataset. However, each query can be an empty string in which case everything will be considered a match; if all queries are empty strings, _soundcorrs_ will simply return the entire dataset. Queries can be regular expressions in any of the four available flavours: R standard (the TRE engine), R Perl-like (the PCRE engine, needs to be explicitly turned on), user’s custom defined through the transcription, and user’s custom in binary notation. Regarding the first two, see [this post](https://stackoverflow.com/questions/47240375/regular-expressions-in-base-r-perl-true-vs-the-default-pcre-vs-tre) for further details; regarding the latter two, see subsection [Transcription](#prep-trans). The first two differ slightly in behaviour, so only one can be chosen at a time. It can, however, be freely mixed with the latter two both between queries and inside a single query.
+
+The second important set of parameters are distances. As was said above, the crux of extracting examples with _soundcorrs_ is that it looks for sequences of sounds which occupy the same segment in all the words in a pair/triple/…. Sometimes, however, it may be desirable to also look for examples which occupy almost the same segment. For example, English words with the -_er_ suffix, such as _computer_ or _farmer_, have been borrowed to multiple languages in which the _r_ is fully pronounced unlike in the English original. The correspondence is therefore Engl. _ə_ : non-Engl. _er_, and in segment terms, Engl. _ə_|- : non-Engl. _e_|_r_. Such examples would not be found by simply searching for Engl. _ə_ which corresponds to non-Engl. _er_ because the former only occupies one segment while the latter spans two. The distance parameters allow _soundcorrs_ to include examples in which the matches have been found in places that are _n_ segments apart. In the case of -_er_, the begin distance can be 0 but the end distance will need to be 1 or greater. Setting either distance to -1 means that this distance is not taken into account at all. If both are set to -1, the result is equivalent to searching for one sequence in one column, and entirely independently, for another sequence in another column. It may therefore seem irresponsible to set the default values of both arguments to -1, but in my experience, it very rarely produces false positives. On the other hand, the opposite behaviour (both arguments set to 0) may easily result in false negatives, which are errors that are not only of a much less intuitive kind, but also never give the user a chance to spot the problem as they are simply not displayed.
+
+Sometimes, one of the words in a pair/triple/… will be missing, which in R is represented by the symbol `NA`. The user is free to choose whether such cases should be considered a match or not.
+
+As was illustrated in subsection [Linguistic datasets](#prep-data) in section [Data preparation](#prep)), linguistic zeros are indispensable for alignment. They do, however, make extraction of examples considerably more difficult and prone to errors for the user, which is why by default they are ignored during the search. Should need to include them arise, however, the user is free to do so.
+
+Lastly, the search is performed on segmented and aligned columns and by default, it is those columns that are displayed as the result. But since they are typically not very convenient to read for a human, the user may choose to display other columns instead.
+
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+<!-- practice ------------------------------------------------------------------------------------ {{{ -->
+## Practice{#examples-pract}
+
+
+In the **GUI**, the ‘Examples’ page is divided into three rows. The top one is used for selecting the dataset, and the bottom one contains a cheat sheet with the most common regular expressions. The middle row is further divided into two parts: on the left, on grey background, are all the parameters discussed in subsection [Theory](#exam-theory) above; on the right, on white background, is where the results are displayed after the ‘Apply’ button at the top of the grey field, is clicked.
+
+In the **CLI**, three functions are available: `findExamples()` is the primary function for extraction of examples; `findPairs()` is a convenience wrapper around `findExamples()` for when there are only two languages in the dataset; and `allPairs()` produces an almost print-ready summary of the dataset, complete with tables and all the examples. Details about the usage of those functions can be found in their documentation (`?findExamples`, etc.), here only the general outlines, and several caveats will be given.
+
+In `findExamples()`, all the parameters beyond the queries must be named in a call to the function because there is no way for R to know a priori how many languages there are in the dataset, and therefore how many queries there will be. The return value of `findExamples()` is a list with two fields: ‘data’ which is a data frame with matching examples, and ‘which’, a logical vector showing which examples in the original dataset were a match. The class of the return value is ‘df.findExamples’; this is purely for technical reasons, to allow for a more legible printed output.
+
+```{r}
+# “ab” spans segments 1–2, while “a” only occupies segment 1
+findExamples (d.abc, "ab", "a", distance.end=0)
+findExamples (d.abc, "ab", "a", distance.end=1)
+
+# linguistic zeros cannot be found if ‘zeros’ is set to ‘FALSE’
+findExamples (d.abc, "-", "", zeros=T)
+findExamples (d.abc, "-", "", zeros=F)
+
+# both the usual and custom regular expressions are permissible
+findExamples (d.abc, "a", "[ou]")
+findExamples (d.abc, "a", "O")
+
+# the output is actuall a list
+str (findExamples(d.abc,"a","a"), max.level=1)
+
+# ‘data’ is what is displayed on the screen
+# ‘which’ is useful for subsetting
+subset (d.abc, findExamples(d.abc,"a","O")$which)
+
+# ‘which’ can also be used to find examples
+#    that exhibit more than one correspondence.
+aaa <- findExamples (d.cap, "a", "a", "a", distance.start=0, distance.end=0)$which
+bbb <- findExamples (d.cap, "b", "b", "b", distance.start=0, distance.end=0)$which
+d.cap$data [aaa & bbb,]
+
+# the ‘cols’ argument can be used to alter the printed output
+findExamples (d.abc, "a", "O", cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
+```
+
+`findPairs()` is a convenience wrapper around `findExamples()` which only takes four arguments: the dataset, the two queries, and mode. Mode can be either ‘exact’ (`1` or `TRUE`) which corresponds to the most strict settings in `findExamples()`, ‘inexact’ (`0` or `FALSE`) which corresponds to the most lenient settings, or a middle ground (`0.5`) which corresponds to perhaps the most useful settings. The output of `findPairs()` is the same as the output of `findExamples()`.
+
+‘allPairs()’ does not have great analytic value in itself, but it can be useful to prepare the material part of a paper. Its output consists of sections devoted to each segment, which contain a general contingency table of the segment’s various renderings, as well as subsections which list all the pairs that exhibit the given correspondence. _soundcorrs_ provides functions to format such output in HTML, in LaTeX, or not at all. Custom formatters are also not very difficult to write. Regarding the tables, see subsection [Practice](#tbls-pract) in section [Tables](#tbls).
+
+
+```{r}
+# and see what result this gives
+allPairs (d.abc, cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
+
+# a clearer result could be obtained by running
+# allPairs (d.cap, cols=c("ORTHOGRAPHY.German","ORTHOGRAPHY.Polish"),
+#    file="~/Desktop/d.cap.html", formatter=formatter.html)
+```
+
+As was mentioned, the “capitals” dataset is linguistically absurd, and so it should not matter that all the Polish names of European capitals are listed as borrowed from German. If however, one wished to fix this problem, and do it not by copying the output to a word processor and replacing `">"` with `":"` there, but rather inside _soundcorrs_, this wish can be fulfilled easily enough. First, the existing `formatter.html()` function needs to be written to a file to serve as a base for the new formatter: `dput(formatter.html, "~/Desktop/myFormatter.R")`. Then, the beginning of the first line of this file needs to be changed to something like `myFormatter <- function`…, and finally, the `">"` and `"<"` signs (written in HTML as `&amp;gt;` and `&amp;lt;`, respectively) need to be replaced with a colon. All that is then left is to load the new function to R and use it to format the output of `allPairs()`:
+
+```{r}
+# load the new formatter function …
+# source ("~/Desktop/myFormatter.R")
+
+# … and use it instead of formatter.html()
+# allPairs (d.cap, cols=c("ORTHOGRAPHY.German","ORTHOGRAPHY.Polish"),
+#    file="~/Desktop/d.cap.html", formatter=myFormatter)
+# note that this time the output will not open in the web browser automatically
+```
 
 <!-- --------------------------------------------------------------------------------------------- }}} -->
 
 <!-- ============================================================================================= }}} -->
-<!-- functions =================================================================================== {{{ -->
-# Functions
+<!-- sound changes =============================================================================== {{{ -->
+# Sound changes{#chngs}
 
 
-‘soundcorrs’ exports several functions intended for linguistic analysis. For easier orientation, they are organized below by what kind of outputs they produce, rather than by their names. ‘soundcorrs’ also exports several functions whose use for linguistic analysis, in and of themselves, is rather limited. Those are grouped in one subsection at the end, and discussed in the alphabetical order.
+Manual application of a series of sound changes to a series of words is not only a time-consuming endavour, it is also prone to errors due to the monotony of the task. _soundcorrs_ provides a way to automate it, and what is important, it allows for changes to be implemented both progressively and regressively.
 
-<!-- contingency tables -------------------------------------------------------------------------- {{{ -->
-## Contingency tables
-
-
-There are three different functions in ‘soundcorrs’ that produce contingnecy tables. There is some logic behind it. ‘summary()’ is only meant to give a general overview of the dataset; ‘coocc()’ is the essential contingency table function; and ‘allCooccs()’ produces an output that is meant to be printed rather than read from the screen.
-
-<!-- summary() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
-### summary()
+<!-- theory -------------------------------------------------------------------------------------- {{{ -->
+## Theory{#chngs-theory}
 
 
-‘summary()’ produces a segment-to-segment contingency table. The values may represent how many times the given segments correspond to each other (‘unit="o"’) or in how many words they correspond to each other (‘unit="w"’). This distinction exists because it is quite possible that there will be a segment which appears more than once in a single word. The argument ‘unit’ accepts nine different values: ‘"o(cc(ur(ence(s))))"’ and ‘"w(or(d(s)))"’. One more argument can be given to ‘summary()’; it is ‘count’, and it determines whether values are given in the absolute, or as relative. It accepts six values: ‘"a(bs(olute))"’ and ‘"r(el(ative))"’.
+Like most tasks in _soundcorrs_, the application of sound changes requires the dataset to be a `soundcorrs` object. Unlike most other tasks, however, sound changes do not require the data to be segmented and aligned. In fact, it is generally recommended that they are not since otherwise sound change functions would be required to deal with segment separators and linguistic zeros. Should this be desirable, e.g. to only apply changes to certain segments, maybe affixes but not roots, this can be implemented in a fashion similar to the syllables example in subsection [Sound changes](#load-chngs) in section [Loading data](#load).
 
-Note that ‘summary()’ reports how many times the given segments correspond to each other – not how often they co-occur in the same word. For example, in a pair L1 "a|b" : L2 "c|d", the "a"/"d" cell will show 0 because because L1 "a" never corresponds directly to L2 "d". This is a different perspective than in ‘coocc()’ below.
+The obvious arguments then are the dataset, and a list of changes. Needless to say, the order of the changes in the list is important, as it is in this order that they will be applied.
+
+As the other arguments, the user can indicate between one and three columns in the dataset. The ‘source’ column is the one from which _soundcorrs_ will take words to apply the sound changes to. Optionally, a ‘target’ column can be selected, with forms that will be compared to the forms resulting from the application of changes. Lastly, the optional ‘metadata’ column contains data that will be passed to sound change functions under the `meta` argument; see [Sound changes](#prep-chngs) in section [Data preparation](#prep).
+
+The last parameter is more technical, it allows the user to enable or disable the highlighting of differences between the post-change forms and the target forms, as well as between the subsequent intermediate forms. It has no impact on the forms themselves, but with large datasets and multiple sound changes, the difference in performance may become noticable.
+
+The output is composed of three parts. One part is a list of the final forms, the second part is a list of trees containing all the intermediate forms, and the third part is a list with the information whether any of the final forms matches the target.
+
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+<!-- practice ------------------------------------------------------------------------------------ {{{ -->
+## Practice{#chngs-pract}
+
+
+In the **GUI**, the dataset as well as all the columns in it are selected from drop-down menus in the top row. In the bottom row, the highlighted field on the left contains a list of changes and the ‘Apply’ button. Changes can be reordered by dragging them around, and they can also be activated and deactivated. Deactivation of a change does not cause it to be unloaded, it remains in the list and can be activated back again without having to reload it in the ‘Data’ page. To the right of the field highlighted in grey, is the area where the results are displayed. The table can be conveniently searched using the field in the top right corner, and it can also be filtered using the fields at the bottom of each column. ‘View’ buttons in the rightmost columns display the intermediate forms. The differences between the final forms and target forms, as well as those between subsequent intermediate forms, are all highlighted in red, regardless of whether it is a missing character, an additional character, or a different character. Missing characters are indicated by underscores ‹\_›. Modifications made in the GUI to the set of sound changes (reorderings and deactivations) can be saved using the ‘Save’ button below the changes. The saved .rda file can be loaded in the same way as R files (see subsection [Sound changes](#load-chngs) in section [Loading data](#load)).
+
+In the **CLI**, only one function is available, `applyChanges()`. Its arguments are: dataset, list of changes, name of columns: source, target, and metadata, and diff. The last three are optional, and are by default `NULL`. The last argument, `highlight`, can be set to `"console"` or `"HTML"` to highlight the differences between the post-change and target forms either for output to the console or for a web browser.
+
+The return value of `applyChanges()` is a list, technically of class `list.applyChanges`, which contains three elements: `$end` with the final forms (this is the only element that is printed by default); `$tree` which saves the path by which the final forms in `$end` have been arrived at; and `$match` which is a named list of the results of comparison to the target forms. The values in `$match` can be: `0` if none of the results matches the target, `0.5` if at least one but not all of the results match the target, and `1` if all the results match the target.
+
+```{r warning=FALSE}
+# prepare a list of changes, in the order of application
+#    for the definitions, see subsection Sound changes in section Loading data
+sc.list <- list (sc.VV2a, sc.2ndV2a, sc.CV2Ca)
+
+# prepare the data and the expected results
+#    (warnings can be safely ignored in this case)
+tmp.l1 <- soundcorrs(data.frame(SOURCE=c("ouroboros","jormungandr")), "L1", "SOURCE", trans.com)
+tmp.l2 <- soundcorrs(data.frame(TARGET=c("arabaras","jarmangandr")), "L2", "TARGET", trans.com)
+dataset <- merge (tmp.l1, tmp.l2)
+
+# and apply the changes to our data
+res <- applyChanges (dataset, sc.list, "SOURCE", "TARGET", NULL)
+res
+
+# see if they match the expectations
+res$match
+
+# see which change did not work as expected
+#    it was CV > Ca because our changes use the sample "common" transcription,
+#    and j does not count in it as a consonant (it's a semivowel)
+res$tree
+```
+
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+
+<!-- ============================================================================================= }}} -->
+<!-- contingency tables ========================================================================== {{{ -->
+# Contingency tables{#tbls}
+
+
+Besides the extraction of examples (see `vignette("soundcorrs-examples")`), the main gain from segmentation and alignment are contingency tables. _soundcorrs_ can produce three different kinds which may serve a variety of purposes.
+
+<!-- theory -------------------------------------------------------------------------------------- {{{ -->
+## Theory{#tbls-theory}
+
+
+The three kinds of contingency tables produced by _soundcorrs_ are: segment-to-segment, correspondence-to-correspondence, and correspondence-to-metadata. Let us briefly introduce each in this order.
+
+Segment-to-segment is the simplest kind. It shows how often segments from one language correspond to segments from another language. For example, in Pol. _kark_ ‘neck’ : Cz. _krk_ id., Pol. _k_ corresponds twice to Cz. _k_, Pol. _r_ once to Cz. _r_, and Pol. _a_ once to Cz. ∅. Uses for such a table can be varied, e.g. to detect regularities, as well as irregularities, between two sets, or to determine whether establishing regularities is even possible.
+
+A correspondence-to-correspondence table, on the other hand, shows how often a given correspondence co-occurs in the same word with another correspondence. In the example above, the Pol. _k_ : Cz. _k_ correspondence co-occurs in one word with three correspondences: 1. Pol. _r_ : Cz. _r_, 2. Pol. _a_ : Cz. ∅, and 3. Pol. _k_ : Cz. _k_. Such a table can be useful e.g. for separating correspondences which always hold from those that depend on the phonetic surrounding or other factors.
+
+Lastly, a correspondence-to-metadata table shows how often a given correspondence co-occurs with a piece of metadata. The ‘piece of metadata’ can be almost anything, depending on the purpose of the analysis. Typically, categorical data will used, such as the name of the consultant who provided the the given pronunciation, the year of the recording, the village where the recording was performed, the age of the consultant, the dialect he or she spoke, etc.
+
+All three kinds of tables can be calculated in four different ways, determined by two parameters.
+
+The first is named ‘count’ in _soundcorrs_; it refers to whether the results are given in absolute numbers, or in the relative. Note that the latter are not relative to the entire table, as that would be hardly informative, but rather in relation to all the correspondences of the given segment. In the case of segment-to-segment tables, this means that e.g. all the counterparts of L1 _a_ add up to 1; in the case of correspondence tables, all the counterparts of L1 _a_\_ add up to 1, and so do all the counterparts of L1 \__a_ (underscore being the character used to connect correspondences, so that e.g. Pol. _o_ : Cz. _e_ is notated `"o_e"`).
+
+The second parameter is called ‘unit’. It determines whether _soundcorrs_ should count the total number of occurrences of the given correspondence, or only the number of words in which it is attested. In the _kark_ example above, Pol. _k_ corresponds to Cz. _k_ twice, but only in one word; and similarly, the Pol. _k_ : Cz. _k_ correspondence co-occurs twice with Pol. _r_ : Cz. _r_, but only in one word.
+
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+<!-- practice ------------------------------------------------------------------------------------ {{{ -->
+## Practice{#tbls-pract}
+
+
+In the **GUI**, the dataset and, in the case of correspondence-to-metadata tables, the metadata column are selected in the top row. The bottom row is divided into two. On the left, in the field with grey background, parameters ‘Count’ and ‘Unit’ can be set. On the right, are three tabs which correspond to the three kinds of tables _soundcorrs_ produces. Results appear after the ‘Apply’ button is clicked. Tables can be searched using the field in the top right corner and, perhaps more conveniently, filtered using the fields below the columns.
+
+In the **CLI**, three functions are available, but they do not correspond directly to the three kinds of tables. Segment-to-segment tables are produced by `summary()`, the two types of correspondence tables are produced by `coocc()`, and there is also `allCooccs()` which outputs multiple tables at once.
+
+`summary()` only takes three arguments, the dataset, ‘count’, and ‘unit’.
 
 ```{r}
 # a general overview of the dataset as a whole
@@ -235,14 +544,7 @@ round (rels, 2)
 apply (rels, 1, sum)
 ```
 
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- coocc() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
-### coocc()
-
-
-‘coocc()’ has two modes: internal and external comparison. The former, invoked when ‘column=NULL’ (the default) cross-tabulates correspondences with themselves. The latter cross-tabulates correspondences with metadata taken from a column in the dataset whose name is given as the argument ‘column’. Like ‘summary()’ above, ‘coocc()’ has the argument ‘unit’ which has the same meaning, and also the argument ‘count’ which may appear to work a little differently. In actuality, its use with ‘summary()’ was a special case. The general idea is that the entire table is divided into blocks such that all rows represent correspondences of the same segment and, in the internal mode, so do all the columns.
-
-Note that ‘coocc()’ reports how many times the given correspondences co-occur in the same word – not how often they appear in the entire dataset. For example, in a pair L1 "a|b" : L2 "c|d", the "a:c"/"b:d" cell will show 1 because the correspondence L1 "a" : L2 "c" co-occurs with L1 "b" : L2 "d" in one word. This is a different perspective than in ‘summary()’ above.
+`coocc()` has the same arguments as `summary()`, plus one more. The additional one is `column`; when set to `NULL`, `coocc()` will produce a correspondence-to-correspondence table; when set to the name of a column in the dataset, `coocc()` will cross-tabulate correspondences with the data from that column.
 
 ```{r}
 # a general look in the internal mode
@@ -272,16 +574,11 @@ rows.a <- which (rownames(tab) %hasPrefix% "a")
 sum (tab [rows.a, ])
 ```
 
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- allCooccs() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
-### allCooccs()
+Lastly, `allCooccs()` splits a table produced by `coocc()` into blocks, each containing the correspondences of one segment. Its primary purpose is to facilitate the application of tests of independence, for which see `lapplyTest()` in subsection [Practice](#fits-pract) in section [Fitting models](#fits).
 
+`allCooccs()` takes all the same arguments as `coocc()`, and in addition, the argument `bin` which determines whether the table should be just cut up, or whether all the resulting slices should also be binned. On binning, see subsection [binTable()](#help-binTable).
 
-‘allCooccs()’ splits a table produced by ‘coocc()’ into blocks, each containing the correspondences of one segment. Its primary purpose is to facilitate the application of tests of independence, for which see ‘lapplyTest()’ below.
-
-‘allCooccs()’ takes all the same arguments as ‘coocc()’: ‘column’, ‘count’, and ‘unit’. In addition, it takes the argument ‘bin’ which determines whether the table should be just cut up, or whether all the resulting slices should also be binned.
-
-The return value of ‘allCooccs()’ is a list which holds all the resulting tables, under names composed from the correspondences and connected with underscores. If ‘column = NULL’, they would be ‘a’, ‘b’, &c. if ‘bin = F’, and if ‘bin = T’, ‘a_b_c_d’ meaning L1 ‘a’ : L2 ‘b’ cross-tabulated with L1 ‘c’ : L2 ‘d’, and so on. If ‘column’ is not ‘NULL’, the names will be ‘a_b_northern’ meaning L1 ‘a’ : L2 ‘b’ tabulated with the ‘northern’ dialect, and so forth.
+The return value of `allCooccs()` is a list which holds all the resulting tables, under names composed from the correspondences and connected with underscores. If `column` is set to `NULL`, the names would be `"a"`, `"b"`, etc. if `bin = F`, and if `bin = T`, `"a_b_c_d"` meaning L1 _a_ : L2 _b_ cross-tabulated with L1 _c_ : L2 _d_, and so on. If `column` is not `NULL`, the names will be `"a_b_northern"` meaning L1 _a_ : L2 _b_ tabulated with the ‘northern’ dialect, and so forth.
 
 ```{r}
 # for a small dataset, the result is going to be small
@@ -297,139 +594,35 @@ names (allCooccs(d.abc))
 names (allCooccs(d.abc,column="DIALECT.L2"))
 ```
 
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+
+<!-- ============================================================================================= }}} -->
+<!-- fitting models ============================================================================== {{{ -->
+# Fitting models{#fits}
+
+
+Once tables, e.g. such as discussed in section [Contingency tables](#tbls), are complete, the user might wish to fit various models to them. _soundcorrs_ offers two functions such occasions; their use is not limited to _soundcorrs_ contingency tables.
+
+<!-- theory -------------------------------------------------------------------------------------- {{{ -->
+## Theory{#fits-theory}
+
+
+A common problem with fitting models in quantitative linguistics, is the number of tries one has to manually perform in order to establish the right starting estimates for the coefficients, or even the correct model – and its starting estimates. The process is not very easy to automate due to warnings and errors that often accompany failed attempts.
+
+_soundcorrs_ has a function to fit multiple models to a single dataset, and its extention which fits multiple models to multiple datasets. They only have one argument in common, and it is `models`. Models are represented as a list with two elements: `$formula`, and `$start`. The latter must be a list, each of whose elements is itself a list of the starting estimates for all the coefficients. So prepared models are then wrapped in a named list and passed to the functions as a single argument. See subsection [Practice](#fits-pract) below for an example.
+
+The remaining arguments differ considerably between the two functions, and it will be more convenient to discuss them separately while introducing the functions themselves.
 
 <!-- --------------------------------------------------------------------------------------------- }}} -->
-<!-- examples ------------------------------------------------------------------------------------ {{{ -->
-## Examples
+<!-- practice ------------------------------------------------------------------------------------ {{{ -->
+## Practice{#fits-pract}
 
 
-‘soundcorrs’ has three functions to look for specific examples. ‘findExamples()’ searches for words which exhibit a given correspondence; ‘findPairs()’ is a convenience wrapper for ‘findExamples()’ for when there are only two languages in the dataset; and ‘allPairs()’ produces an almost print-ready summary of the dataset, complete with tables and all the examples.
+As of the current version, the two functions cannot be accessed from the **GUI**.
 
-<!-- findExamples()- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
-### findExamples()
+In the **CLI**, the function that fits multiple models to a single dataset is called `multiFit()`, and the one that fits multiple models to multiple datasets is calles `fitTable()`. Below is only a brief introduction; further details can be found in the documentation (run `?multiFit` and `?fitTable`).
 
-
-‘findExamples()’ searches a dataset for pairs/triples/… which exhibit a specific sound correspondence. It can take several arguments, which can be divided into three groups.
-
-The first group is just one obligatory argument, ‘data’. This is the dataset, and it must be a ‘soundcorrs’ object.
-
-The second group are the queries. There must be as many of them as there are languages in ‘data’, and they must be given in the same order as the languages in ‘data’. For example, if the dataset contains data from English and Polish, there need to be two queries, the first to be looked for in English data, and the second in Polish data. All queries can be regular expressions: such as defined in R, or custom metacharacters defined in the transcription. The can also be empty strings, which ‘findExamples()’ will interpret as a permission to accept anything.
-
-The third group are optional arguments which define how the data are sifted and displayed. These arguments can only be used with a name (f.ex. ‘findExamples(data,"a","a",cols="all")’) because R does not know a priori how many queries there are going to be.
-
-The ‘cols’ argument defines which columns of the original data are displayed. It can be a vector of strings, "all", or "aligned". The last option is the default one.
-
-The next two arguments are ‘distance.start’ and ‘distance.end’. These define the maximum permitted distance, in segments, between the matches. Let us use as example French "f|r|ã|-|s" and English "f|r|ā|n|s", and imagine that we want to find cases where a French vowel corresponds to a vowel-n sequence in English. The part of the French word that interests us is segment number 3; its counterpart in the English word starts on segment 3 and ends on segment 4. The distance between the starts is 0, and the distance between the ends is 1. ‘findExamples()’ will find our pair of words if ‘distance.start’ is set to 0 or more, and ‘distance.end’ to 1 or more.
-
-Both arguments can also take negative values which means that distance is not checked at all. These are in fact the defaults (-1). Effectively, the default behaviour of ‘findExamples()’ is to find any such pair/triple/… that the first word contains the first query, the second word the second query, and so on, regardless of whether they appear in the corresponding segments. For the example above, ‘findExamples(dataset,"f","r")’ also returns a match. It may therefore seem irresponsible to set the default values of both arguments to -1, but in my experience, it very rarely produces false positives. On the other hand, the opposite behaviour (both arguments set to 0) may easily result in false negatives, ones that are not only of a much less intuitive kind, but also never give the user a chance to spot the problem as they are simply not displayed.
-
-The next argument is ‘na.value’ which determines how missing values (‘NA’) are treated. This argument can only have one of two values: -1 and 0. The former means that missing values are considered non-matches, the latter that they are considered matches. The latter is the default. Note that an empty string query takes precedence over ‘na.value’, that is even whan ‘na.value’ is set to -1, ‘NA’s will show up in the results when the query is an empty string.
-
-The last optional argument is ‘zeros’ which can be set to ‘TRUE’ or ‘FALSE’ (the default). The former means that search is performed on words with linguistic zeros in them. In the example above, the query "Vs" would find "f|r|ã|-|s" only if ‘zeros’ were set to ‘FALSE’.
-
-The output of ‘findExamples()’ is a list with two fields: ‘data’ which is a data frame with matching examples, and ‘which’, a logical vector showing which examples in the original dataset were a match. The class of the return value is ‘df.findExamples’; this is purely for technical reasons, to allow for a more legible printed output.
-
-See also ‘findPairs()’, a convenience wrapper around ‘findExamples()’.
-
-```{r}
-
-# “ab” spans segments 1–2, while “a” only occupies segment 1
-findExamples (d.abc, "ab", "a", distance.end=0)
-findExamples (d.abc, "ab", "a", distance.end=1)
-
-# linguistic zeros cannot be found if ‘zeros’ is set to ‘FALSE’
-findExamples (d.abc, "-", "", zeros=T)
-findExamples (d.abc, "-", "", zeros=F)
-
-# both the usual and custom regular expressions are permissible
-findExamples (d.abc, "a", "[ou]")
-findExamples (d.abc, "a", "O")
-
-# the output is actuall a list
-str (findExamples(d.abc,"a","a"), max.level=1)
-
-# ‘data’ is what is displayed on the screen
-# ‘which’ is useful for subsetting
-subset (d.abc, findExamples(d.abc,"a","O")$which)
-
-# ‘which’ can also be used to find examples
-#    that exhibit more than one correspondence.
-aaa <- findExamples (d.cap, "a", "a", "a", distance.start=0, distance.end=0)$which
-bbb <- findExamples (d.cap, "b", "b", "b", distance.start=0, distance.end=0)$which
-d.cap$data [aaa & bbb,]
-
-
-# the ‘cols’ argument can be used to alter the printed output
-findExamples (d.abc, "a", "O", cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
-```
-
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- findPairs() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
-### findPairs()
-
-
-This is a convenience wrapper around ‘findExamples()’ which can be only used for datasets which contain data from exactly two languages. Instead of the three optional arguments of ‘findExamples()’, ‘findPairs()’ only has one. It is called ‘exact’, and it can take several different values.
-
-The default is the inexact mode (‘exact’ set to 0 or ‘FALSE’). It corresponds to ‘distance.start’ and ‘distance.end’ being both set to -1, ‘na.value’ being set to 0, and ‘zeros’ being set to ‘FALSE’, which are also the default settings in ‘findExamples()’. The risk here are false positives. In my experience, however, those are rare, and because they are displayed, the user has a chance to spot them.
-
-The opposite is the exact mode (‘exact’ set to 1 or ‘TRUE’), which corresponds to ‘distance.start’ and ‘distance.end’ being both set to 0, ‘na.value’ being set to -1, and ‘zeros’ to ‘TRUE’. The risk are false negatives, in my experience both much more common than false positives in the inexact mode, and effectively impossible to spot as they are simply not displayed.
-
-A middle ground is the semi-exact mode (‘exact’ set to 0.5), where ‘distance.start’ and ‘distance.end’ are both set to 1, ‘na.value’ is set to 0, and ‘zeros’ to ‘FALSE’. It decreases the risk of false positives while increasing only a little the risk of false negatives.
-
-Apart from the above, ‘findPairs()’ also has the parameter ‘cols’, whose value is passed directly to ‘findExamples()’.
-
-The output of ‘findPairs()’ is the same as the output of ‘findExamples()’.
-
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- allPairs() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -{{{ -->
-### allPairs()
-
-
-‘allPairs()’ does not have great analytic value in itself, but it can be useful when writing a paper e.g. on the phonetic adaptation of loanwords, to prepare its material part.
-
-The output of ‘allPairs()’ consists of sections devoted to each segment, filled with a general contingency table of its various renderings, and followed by subsections which list all pairs exhibiting the given correspondence. ‘soundcorrs’ provides functions to format such output in HTML or in LaTeX, or not at all. Custom formatters are also not very difficult to write.
-
-Tables can show the number of occurrences or the number of words in which the given correspondence manifests itself (‘unit’), in absolute or in relative terms (‘count’; all three with values as with ‘summary()’). Which columns are printed can be modified with ‘cols’, and whether to write to a file or to the screen, with ‘file’ (‘NULL’ meaning the screen). Lastly, the formatting is controlled by a special function, of which ‘soundcorrs’ provides three: ‘formatter.none()’, ‘formatter.html()’, and ‘formatter.latex()’. A custom formatter can also take additional arguments, which will be passed to it from the call to ‘allPairs()’.
-
-```{r}
-# and see what result this gives
-allPairs (d.abc, cols=c("ORTHOGRAPHY.L1","ORTHOGRAPHY.L2"))
-
-# a clearer result could be obtained by running
-# allPairs (d.cap, cols=c("ORTHOGRAPHY.German","ORTHOGRAPHY.Polish"),
-#    file="~/Desktop/d.cap.html", formatter=formatter.html)
-```
-
-\noindent As was mentioned, the “capitals” dataset is linguistically absurd, and so it should not matter that all the Polish names of European capitals are listed as borrowed from German. If however, one wished to fix this problem, and do it not by copying the output to a word processor and replacing “>” with “:” there, but rather inside ‘soundcorrs’, this wish can be fulfilled easily enough. First, the existing ‘formatter.html()’ function needs to be written to a file to serve as a base for the new formatter: ‘dput(formatter.html, "~/Desktop/myFormatter.R")’. Then, the beginning of the first line of this file needs to be changed to something like ‘myFormatter <- function’…, and finally, the “>” and “<” signs (written in HTML as ‘&amp;gt;’ and ‘&amp;lt;’, respectively) need to be replaced with a colon. All that is then left is to load the new function to R and use it to format the output of ‘allPairs()’:
-
-```{r}
-# load the new formatter function …
-# source ("~/Desktop/myFormatter.R")
-
-# … and use it instead of ‘formatter.html()’
-# allPairs (d.cap, cols=c("ORTHOGRAPHY.German","ORTHOGRAPHY.Polish"),
-#    file="~/Desktop/d.cap.html", formatter=myFormatter)
-# note that this time the output will not open in the web browser automatically 
-```
-
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-
-
-<!-- --------------------------------------------------------------------------------------------- }}} -->
-<!-- fits ---------------------------------------------------------------------------------------- {{{ -->
-## Fits
-
-
-Two ‘soundcorrs’ functions help automate fitting models to data: the simpler ‘multiFit()’ and the slightly more complex ‘fitTable()’.
-
-<!-- multiFit() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -{{{ -->
-### multiFit()
-
-
-‘multiFit()’ fits multiple models to a single dataset. It takes as argument the dataset, as well as a list of models, in which each element is a list that contains two named fields: ‘formula’, and ‘start’. The latter is a list of lists of starting estimates for the parameteres of the model, to be tested in case the previous ones fail to produce a fit. The user can specify the fitting function, as well as pass additional arguments to it.
-
-The return value of ‘fitTable()’ is a list of lists containing the outputs of the fitting function. Warnings and errors, which are suppressed by ‘multiFit()’, are attached to the individual elements of the output as attributes. Technically, the result is of class ‘list.multiFit’ so that it can passed to ‘summary()’ to produce a table for easier comparison of the fits. The available metrics are ‘aic’, ‘bic’, ‘rss’ (the default), and ‘sigma’. In addition, the output of ‘fitTable()’ has an attribute ‘depth’; it is intended for ‘summary()’, and should not be changed by the user.
+`multiFit()` takes as argument the dataset, and a list of models. The user can also specify the fitting function, as well as pass additional arguments to it. The return value of `fitTable()` is a list of lists which contain the outputs of the fitting function. Warnings and errors, which are suppressed by `multiFit()`, are attached to the individual elements of the output as attributes. Technically, the result is of class `list.multiFit` so that it can passed to `summary()` to produce a table for easier comparison of the fits. The available metrics are `aic`, `bic`, `rss` (the default), and `sigma`. In addition, the output of `fitTable()` has an attribute `depth`; it is intended for `summary()`, and should not be edited by the user.
 
 ```{r}
 # prepare some random data
@@ -449,14 +642,9 @@ fit <- multiFit (models, dataset)
 summary (fit)
 ```
 
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- fitTable() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -{{{ -->
-### fitTable()
+`fitTable()` applies `multiFit()` over a table, such as the ones produced by `coocc()` or `summary()`. The arguments are: the models, the dataset, margin (as in `apply()`: `1` for rows, `2` for columns), the converter function, and additional arguments passed to `multiFit()` (including the fitting function). The converter is a function that turns individual rows or columns of the table into data frames to which models can be fitted. _soundcorrs_ provides three simple functions: `vec2df.id()` (the default one), `vec2df.hist()`, and `vec2df.rank()`. The first one only attaches a list of `X` values, the second one extracts from a histogram the midpoints and counts, and the third one ranks the data. Any function can be used, so long as it takes a numeric vector as the only argument, and returns a data frame. The names of columns in the data frames returned by these three functions are `X` and `Y`, something to be borne in mind when defining the formulae of the models.
 
-
-‘fitTable()’ applies ‘multiFit()’ over a table, such as the ones produced by ‘coocc()’ or ‘summary()’. The arguments are: the models, the dataset, margin (as in ‘apply()’: 1 for rows, 2 for columns), the converter function, and additional arguments passed to ‘multiFit()’ (including the fitting function). The converter is a function that turns individual rows or columns of the table into data frames to which models can be fitted. ‘soundcorrs’ provides three simple functions: ‘vec2df.id()’ (the default one), ‘vec2df.hist()’, and ‘vec2df.rank()’. The first one only attaches a list of ‘X’ values, the second one extracts from a histogram the midpoints and counts, and the third one ranks the data. Any function can be used, so long as it takes a numeric vector as the only argument, and returns a data frame. The names of columns in the data frames returned by these three functions are ‘X’ and ‘Y’, something to be borne in mind when defining the formulae of the models.
-
-As with ‘multiFit()’, the return value of ‘fitTable()’ is a list of the outputs of the fitting function, only in the case of ‘fitTable()’ it is nested. It, too, can be passed to ‘summary()’ to produce a convenient table.
+As with `multiFit()`, the return value of `fitTable()` is a list of the outputs of the fitting function, only in the case of `fitTable()` it is nested. It, too, can be passed to `summary()` to produce a convenient table.
 
 ```{r}
 # prepare the data
@@ -475,60 +663,20 @@ fit <- fitTable (models, dataset, 1, vec2df.hist)
 summary (fit, metric="sigma")
 ```
 
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-
-
 <!-- --------------------------------------------------------------------------------------------- }}} -->
-<!-- sound changes ------------------------------------------------------------------------------- {{{ -->
-## Sound changes
+
+<!-- ============================================================================================= }}} -->
+<!-- helper functions ============================================================================ {{{ -->
+# Helper functions{#help}
 
 
-Currently, ‘soundcorrs’ offers only one function related to sound changes. It is ‘applyChanges()’, and it can be used to automatically apply a series of changes to a series of words.
+In addition to analytic functions, _soundcorrs_ also exports several helpers which serve diverse purposes and do not form a thematically coherent whole. As of the current version, they are only accessible through the CLI. Below, they are discussed in alphabetical order. Further details can be found in the documentation of individual functions (run `?nameOfTheFunction`).
 
-<!-- applyChanges() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -{{{ -->
-### applyChanges()
-
-
-‘applyChanges()’ does what its name suggests: it applies a series of sound changes to a series of words. It takes up to four arguments: ‘data’ which is a vector of character strings to which the changes will be applied; ‘changes’, a list of ‘soundchange’ objects; ‘target’, a vector of character strings of the same length as ‘data’, to which the results will be compared; and ‘meta’, a vector of the same length as ‘data’, which will be passed on to ‘soundchange’ functions.
-
-The return value of ‘applyChanges()’ is a list, technically of class ‘list.applyChanges’, which contains three elements: ‘end’, the final results of the application of sound changes (this is the only element that is printed by default); ‘match’ which is a named list of the results of comparison to ‘target’; and ‘tree’ which saves the path by which the final forms in ‘end’ have been arrived at. The values in ‘target’ can be: 0 if none of the results matches ‘target’, 0.5 if at least one but not all of the results match ‘target’, and 1 if all the results match ‘target’.
-
-```{r}
-# prepare a list of changes, in the order of application
-sc.list <- list (sc.VV2a, sc.2ndV2a, sc.CV2Ca)
-
-# prepare the data and the expected results
-data <- c ("ouroboros", "jormungandr")
-target <- c ("arabaras", "jarmangandr")
-
-# and apply the changes to our data
-res <- applyChanges (data, sc.list, target, meta=NULL)
-res
-
-# see if they match the expectations
-res$match
-
-# see which change did not work as expected
-#    it was CV > Ca because our changes use the sample "common" transcription,
-#    and j does not count in it as a consonant (it's a semivowel)
-res$tree
-```
-
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
+<!-- addSeparators() ----------------------------------------------------------------------------- {{{ -->
+## addSeparators(){#help-addSeparators}
 
 
-<!-- --------------------------------------------------------------------------------------------- }}} -->
-<!-- helper functions ---------------------------------------------------------------------------- {{{ -->
-## Helper functions
-
-
-In addition to analytic functions, ‘soundcorrs’ also exports several helpers. Let us now briefly discuss those, this time simply in the alphabetic order.
-
-<!-- addSeparators() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
-### addSeparators()
-
-
-As was mentioned above, automatic segmentation and alignment requires careful supervision, and it may prove in the end to be easier to do by hand. ‘addSeparators()’ can facilitate the first half of this task by interspersing a vector of character strings with a separator.
+As was mentioned in subsection [Linguistic datasets](#prep-data) in section [Data preparation](#prep), automatic segmentation and alignment requires careful supervision, and in effect, it may prove in the end to be easier to do by hand. `addSeparators()` can facilitate the first half of this task by interspersing a vector of character strings with a separator.
 
 ```{r}
 # using the default ‘|’ …
@@ -538,13 +686,12 @@ addSeparators (d.abc$data$ORTHOGRAPHY.L1)
 addSeparators (d.abc$data$ORTHOGRAPHY.L1, ".")
 ```
 
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+<!-- binTable() ---------------------------------------------------------------------------------- {{{ -->
+## binTable(){#help-binTable}
 
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- binTable() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -{{{ -->
-### binTable()
 
-
-It may be sometimes that the data are insufficient for a test of independence, or that the contingency table is too diversified to draw concrete conclusions from it. ‘binTable()’ takes one or more rows and one or more columns as arguments, and leaves those rows and columns unchanged, while summing up all the others.
+It may be sometimes that the data are insufficient for a test of independence, or that the contingency table is too diversified to draw concrete conclusions from it. `binTable()` takes one or more rows and one or more columns as arguments, and leaves those rows and columns unchanged, while summing up all the others.
 
 ```{r}
 # build a table for a slightly larger dataset
@@ -561,40 +708,38 @@ cols <- which (colnames(tab) %hasPrefix% "[oōöȫ]")
 binTable (tab, rows, cols)
 ```
 
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+<!-- expandMeta() -------------------------------------------------------------------------------- {{{ -->
+## expandMeta(){#help-expandMeta}
 
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- expandMeta() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -{{{ -->
-### expandMeta()
 
+Metacharacters defined in the transcription (“wildcards”) can be used inside sound changes, as well as inside a `findExamples()` or a `findPairs()` query, but they can also be used with `grep()` or any other function. The only difference is that the first three functions automatically make a call to `expandMeta()` in order to translate those metacharacters into regular expressions that vanilla R can understand, while for `grep()`, or any other function from outside _soundcorrs_, the user needs to call `expandMeta()` explicitly.
 
-Metacharacters defined in the transcription (“wildcards”) can be used inside sound changes, as well as inside a ‘findExamples()’ or a ‘findPairs()’ query, but they can also be used with ‘grep()’ or any other function. The only difference is that the first three functions automatically make a call to ‘expandMeta()’ in order to translate those metacharacters into regular expressions that vanilla R can understand, while for ‘grep()’, or any other function from outside ‘soundcorrs’, the user needs to make an explicit call to ‘expandMeta()’.
-
-Beside the metacharacters defined in the transcription, ‘expandMeta()’ can also understand ‘binary notation’, i.e. an enumeration of distinctive features such as "[+cons,-stop]". The condition is that the enumeration must be enclosed in square brackets, it must contain the same features as are used in the VALUE column in the transcription, each feature must have a "+" or "-" sign in front of it, the features must be separated by commas, and there can be no spaces inside the brackets. Should any of those rules be broken, the would-be wildcard will be kept in the query string as is, and will surely fail to produce any match in the search.
+Beside the metacharacters defined in the transcription (see subsection [Transcription](#prep-trans) in section [Data preparation](#prep)), `expandMeta()` can also understand ‘binary notation’, i.e. an enumeration of distinctive features such as "[+cons,-stop]". The condition is that the enumeration must be enclosed in square brackets, it must contain the same features as are used in the VALUE column in the transcription, each feature must have a "+" or "-" sign in front of it, the features must be separated by commas, and there can be no spaces inside the brackets. Should any of those rules be broken, the would-be wildcard will be kept in the query string as is, and will surely fail to produce any match in the search.
 
 ```{r}
 # let us search a column other than the one specified as ‘aligned’
 orth <- d.abc$data [, "ORTHOGRAPHY.L2"]
 
 # look for all VCC sequences
-query <- expandMeta (d.cap$trans[[1]], "VCC")
+query <- expandMeta (d.abc$trans[[1]], "VCC")
 orth [grep(query,orth)]
 
 # look for all VCC words
-query <- expandMeta (d.cap$trans[[1]], "^VCC$")
+query <- expandMeta (d.abc$trans[[1]], "^VCC$")
 orth [grep(query,orth)]
 
 # the same in the binary notation
-query <- expandMeta (d.cap$trans[[1]], "^[+vow][+cons][+cons]$")
+query <- expandMeta (d.abc$trans[[1]], "^[+vow][+cons][+cons]$")
 orth [grep(query,orth)]
 ```
 
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+<!-- %hasPrefix% and %hasSuffix% ----------------------------------------------------------------- {{{ -->
+## %hasPrefix% and %hasSuffix%{#help-hasPrefix}
 
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- %hasPrefix% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
-### %hasPrefix%
 
-
-Checks if a string begins with another string. In ‘soundcorrs’, this can be useful for extracting specific rows and columns from a contingency table.
+Check if a string begins or ends with another string. In _soundcorrs_, this can be useful for extracting specific rows and columns from a contingency table.
 
 ```{r}
 # build a table for a slightly larger dataset
@@ -605,38 +750,24 @@ tab <- coocc (d.cap)
 rows <- which (rownames(tab) %hasPrefix% "[aāäǟ]")
 cols <- which (colnames(tab) %hasPrefix% "[sśš]")
 tab [rows, cols]
-```
 
-
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- %hasSuffix% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
-### %hasSuffix%
-
-
-‘%hasSuffix%’ works nearly the same as ‘%hasPrefix%’, only instead of the beginning of a word, it looks at its end.
-
-```{r}
-# build a table for a slightly larger dataset
-tab <- coocc (d.cap)
-
-# it is quite difficult to read as a whole, so let us focus
-#    on what corresponds to a-like vowels in L1 and s-like consonants in L2
+# and now let us see what corresponds to a-like vowels in L1
+#    and s-like consonants in L2
 rows <- which (rownames(tab) %hasSuffix% "[aāäǟ]")
 cols <- which (colnames(tab) %hasSuffix% "[sśš]")
 tab [rows, cols]
 ```
 
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+<!-- lapplyTest() -------------------------------------------------------------------------------- {{{ -->
+## lapplyTest(){#help-lapplyTest}
 
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- lapplyTest() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -{{{ -->
-### lapplyTest()
 
+`lapplyTest()` is a variant of `base::lapply()` specifically adjusted for the application of tests of independence. The main difference lies in the handling of warnings and errors.
 
-‘lapplyTest()’ is a variant of ‘base::lapply()’ specifically adjusted for the application of tests of independence. The main difference lies in the handling of warnings and errors.
+This function takes a list of contingency tables, such as generated by `allCooccs()` (see subsection [Practice](#tbls-pract) in section [Contingency tables](#tbls)), and applies to each of its elements a function given in `fun`. By default, it is `chisq.test()`, but any other test can be used, so long as its output contains an element named `p.value`. The result is a list of the outputs of `fun`, to each attached as an attribute a warning or an error if any were produced. Additional arguments to `fun` can also be passed in a call to `lapplyTest()`.
 
-This function takes a list of contingency tables, such as generated by ‘allCooccs()’ above, and applies to each of its elements a function given in ‘fun’. By default, it is ‘chisq.test()’, but any other test can be used, so long as its output contains an element named ‘p.value’. The result is a list of the outputs of ‘fun’, to each attached as an attribute a warning or an error if any were produced. Additional arguments to ‘fun’ can also be passed in a call to ‘lapplyTest()’.
-
-Technically, the output is of class ‘list.lapplyTest’. It can be passed to ‘summary()’ to sift through the results and only print the ones with the p-value below the specified threshold (the default is 0.05). Those tests which produced a warning are prefixed with an exclamation mark.
+Technically, the output is of class `list.lapplyTest`. It can be passed to `summary()` to sift through the results and only print the ones with the p-value below the specified threshold (the default is 0.05). Those tests which produced a warning are prefixed with an exclamation mark.
 
 ```{r}
 # let us prepare the tables
@@ -657,18 +788,17 @@ attr (chisq$a, "warning")
 tabs$a
 ```
 
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+<!-- loadSampleDataset() ------------------------------------------------------------------------- {{{ -->
+## loadSampleDataset(){#help-loadSampleDataset}
 
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- loadSampleDataset() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
-### loadSampleDataset()
 
+Due to technical limitations of R and CRAN, primarily to do with encoding, sample datasets provided by _soundcorrs_ cannot be stored in the preloaded form (non-ASCII characters). They also cannot be automatically loaded when _soundcorrs_ is attached (staged install prevents this kind of usage of `system.file()`), and they cannot be included in full in the source files, even when Unicode characters are escaped because Windows do not know how to convert those to native encoding. It seems that the only half-convenient way of making Unicode datasets available is through a separate function that can load them on user`s request. `loadSampleDataset()` is such a function.
 
-Due to technical limitations of R and CRAN, primarily to do with encoding, sample datasets provided by ‘soundcorrs’ cannot be stored in the preloaded form (non-ASCII characters). They also cannot be automatically loaded when ‘soundcorrs’ is attached (staged install prevents this kind of usage of ‘system.file()’), and they cannot be included in full in the source files, even when Unicode characters are escaped because Windows do not know how to convert those to native encoding. It seems that the only half-convenient way of making Unicode datasets available is through a separate function that can load them on user’s request. ‘loadSampleDataset()’ is such a function.
-
-It only takes one argument, ‘x’, which can take one of the following values:
+`loadSampleDataset()` only takes one argument, ‘x’, which can take one of the following values:
 
 * ‘soundchange’s: ‘change-dl2l’ (the \*_l_, \*_dl_ > \*_l_ merger in Slavic, regressively), ‘change-palatalization’ (the first palatalization in Slavic, progressively), ‘change-rhotacism’ (rhotacism in Latin, progressively);
-* ‘soundcorrs’: ‘data-abc’ (entirely made up), ‘data-capitals’ (EU capitals in German, Polish, and Spanish), ‘data-ie’ (a dozen Indo-European examples from Campbell’s _Historical Linguistics_, see above);
+* _soundcorrs_: ‘data-abc’ (entirely made up), ‘data-capitals’ (EU capitals in German, Polish, and Spanish), ‘data-ie’ (a dozen Indo-European examples from Campbell’s _Historical Linguistics_, see above);
 * ‘transcription’: ‘trans-common’ (a fragment of the traditional continental transcription), ‘trans-ipa’ (a fragment of the IPA).
 
 ```{r}
@@ -679,17 +809,16 @@ tmp <- loadSampleDataset ("trans-common")
 identical (tmp, trans.com)
 ```
 
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+<!-- long2wide() --------------------------------------------------------------------------------- {{{ -->
+## long2wide(){#help-long2wide}
 
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- long2wide() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
-### long2wide()
 
+`long2wide()`, together with `wide2long()` (below) are used to convert data frames between the “long format” and the “wide format” (see subsection [Linguistic datasets](#prep-data) in section [Data preparation](#prep)). Of these two, `long2wide()` is particularly useful because the “long format” tends to be easier for humans to perform the segmentation, and is therefore preferable for storing data, while the “wide format” is used internally and required by _soundcorrs_.
 
-‘long2wide()’, together with ‘wide2long()’ are used to convert data frames between the “long format” and the “wide format” (see above). Of these two, ‘long2wide()’ is particularly useful because the “long format” tends to be easier for humans to perform the segmentation, and is therefore preferable for storing data, while the “wide format” is used internally and required by ‘soundcorrs’.
+During the conversion, the number of columns is almost doubled (while the number of rows halved), but because it is unwise to have duplicate column names, they are given suffixes – which are taken from the values in the column `LANGUAGE`. The name of the column used for that purpose can be changed using the `col.lang` argument.
 
-During the conversion, the number of columns is almost doubled (while the number of rows halved), but because it is unwise to have duplicate column names, they are given suffixes – which are taken from the values in the column ‘LANGUAGE’. The name of the column used for that purpose can be changed using the ‘col.lang’ argument.
-
-Some of the attributes pertain to only one word in a pair or to the pair as a whole. In the “long format” those have to be repeated, but in the “wide format” this is not necessary. ‘long2wide()’ allows for certain columns to be excluded from the conversion, using the ‘skip’ argument.
+Some of the attributes pertain to only one word in a pair or to the pair as a whole. In the “long format” those have to be repeated, but in the “wide format” this is not necessary. `long2wide()` allows for certain columns to be excluded from the conversion, using the `skip` argument.
 
 ```{r}
 # the “abc” dataset is in the long format
@@ -702,15 +831,14 @@ long2wide (abc.long)
 abc.wide <- long2wide (abc.long, skip="ID")
 ```
 
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+<!-- ngrams() ------------------------------------------------------------------------------------ {{{ -->
+## ngrams(){#help-ngrams}
 
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- ngrams() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -{{{ -->
-### ngrams()
 
+`ngrams()` turns a vector of words into a list of n-grams, or a table of its frequencies. The first argument is the vector of words; the second is `n`, the length of n-grams to extract (defaults to `1`); and the last `as.table` which determines whether the output is a list of n-grams or a table of its frequencies (defaults to `TRUE`).
 
-‘ngrams()’ turns a vector of words into a list of n-grams, or a table of its frequencies. The first argument is the vector of words; the second is ‘n’, the length of n-grams to extract (defaults to ‘1’); and the last ‘as.table’ which determines whether the output is a list of n-grams or a table of its frequencies (defaults to ‘TRUE’).
-
-Two more arguments are available. ‘borders’ is a vector of two character strings: the first to be prepended to all the words, and the second to be appended to them. This way it is clear which n-grams were in the initial, and which in the final position inside the word. ‘borders’ defaults to a vector of two empty strings. Lastly, ‘rm’ is a string of characters that are to be removed from the words before they are cut into n-grams. For instance, to remove all linguistic zeros use ‘rm="-"’, and to remove zeros and segment separators, use ‘rm="[-\\|]"’.
+Two more arguments are available. `borders` is a vector of two character strings: the first to be prepended to all the words, and the second to be appended to them. This way it is clear which n-grams were in the initial, and which in the final position inside the word. `borders` defaults to a vector of two empty strings. Lastly, `rm` is a string of characters that are to be removed from the words before they are cut into n-grams. For instance, to remove all linguistic zeros use `rm="-"`, and to remove zeros and segment separators, use `rm="[-\\|]"`.
 
 ```{r}
 # with n==1, ngrams() returns simply the frequencies of segments
@@ -722,12 +850,12 @@ mtx <- as.matrix (sort(tab,decreasing=T))
 head (data.frame (RANK=1:length(mtx), COUNT=mtx, FREQ=mtx/sum(mtx)))
 ```
 
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- subset() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -{{{ -->
-### subset()
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+<!-- subset() ------------------------------------------------------------------------------------ {{{ -->
+## subset(){#help-subset}
 
 
-‘subset()’ does what its name suggests, i.e. it subsets a dataset using the provided condition. It returns a new ‘soundcorrs’ object.
+`subset()` does what its name suggests, i.e. it subsets a dataset using the provided condition. It returns a new _soundcorrs_ object.
 
 ```{r}
 # select only examples from L2’s northern dialect
@@ -740,15 +868,14 @@ subset (d.cap, grepl("German",d.cap$data$OFFICIAL.LANGUAGE)) $data
 subset (d.abc, findPairs(d.abc,"a","a")$which) $data
 ```
 
+<!-- --------------------------------------------------------------------------------------------- }}} -->
+<!-- wide2long() --------------------------------------------------------------------------------- {{{ -->
+## wide2long(){#help-wide2long}
 
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-<!-- wide2long() - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - {{{ -->
-### wide2long()
 
+`wide2long()` is simply the inverse of `long2wide()` (above). The conversion may not be perfect, as the order of the columns may change.
 
-‘wide2long()’ is simply the inverse of ‘long2wide()’. The conversion may not be perfect, as the order of the columns may change.
-
-In ‘long2wide()’, suffixes were taken from the values in the ‘LANGUAGE’ column; this time they must be specified explicitly. They will be stored in a column defined by the argument ‘col.lang’, which defaults to ‘LANGUAGE’. However, the string that separated column names from suffixes will not be removed by default. To strip it, the argument ‘strip’ needs to be set to the length of the separator.
+In `long2wide()`, suffixes were taken from the values in the `LANGUAGE` column; this time they must be specified explicitly. They will be stored in a column defined by the argument `col.lang`, which defaults to `LANGUAGE`. However, the string that separated column names from suffixes will not be removed by default. To strip it, the argument `strip` needs to be set to the length of the separator.
 
 ```{r}
 # let us use the converted “abc” dataset
@@ -761,20 +888,6 @@ wide2long (abc.wide, c(".L1",".L2"))
 wide2long (abc.wide, c(".L1",".L2"), strip=1)
 ```
 
-
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - }}} -->
-
-
 <!-- --------------------------------------------------------------------------------------------- }}} -->
-
-<!-- ============================================================================================= }}} -->
-<!-- citation ==================================================================================== {{{ -->
-# Contact, citation
-
-
-If you found a bug, have a remark to make about ‘soundcorrs’, or wishes for its future releases, please write to kamil.stachowski@gmail.com.
-
-If you use ‘soundcorrs’ in your research, please cite it as Stachowski K. [forthcoming]. soundcorrs: Tools for Semi-Automatic Analysis of Sound Correspondences.
-
 
 <!-- ============================================================================================= }}} -->

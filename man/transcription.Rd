@@ -4,8 +4,12 @@
 \alias{transcription}
 \title{Constructor function for the \code{transcription} class.}
 \usage{
-transcription(data, col.grapheme = "GRAPHEME", col.meta = "META",
-  col.value = "VALUE")
+transcription(
+  data,
+  col.grapheme = "GRAPHEME",
+  col.meta = "META",
+  col.value = "VALUE"
+)
 }
 \arguments{
 \item{data}{[data.frame] Data frame containing the transcription and its meaning.}

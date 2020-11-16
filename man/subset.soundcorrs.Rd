@@ -29,5 +29,5 @@ Once a data frame is enclosed in a \code{\link{soundcorrs}} object, it is recomm
 dataset <- loadSampleDataset ("data-capitals")
 subset (dataset, OFFICIAL.LANGUAGE=="German")
 subset (dataset, grepl("German",OFFICIAL.LANGUAGE))
-subset (dataset, findExamples(dataset, "\\u00E4", "e", "")$which)  # a-diaeresis
+subset (dataset, findExamples(dataset, "\u00E4", "e", "")$which)  # a-diaeresis
 }

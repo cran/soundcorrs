@@ -13,7 +13,7 @@
 
 \item{unit}{[character] Count how many times a correspondence occurs or in how many words it occurs? Accepted values are \code{"o(cc(ur(ence(s))))"} and \code{"w(or(d(s)))"}. Defaults to \code{"w"}.}
 
-\item{...}{Unused; only for consistency with \code{\link{print}}.}
+\item{...}{Unused; only for consistency with \code{base::\link{summary}}.}
 }
 \value{
 [table] The contingency table. The values represent how often the given segments correspond to each other, not how often they co-occur in the same word (cf. \code{\link{coocc}}).

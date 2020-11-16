@@ -25,7 +25,7 @@ The structure of a \code{\link{soundchange}} object is probably not too dificult
 trans <- loadSampleDataset ("trans-common")
 # run print.soundchange
 a2b <- soundchange ("a > b", "sample change", trans,
-"This is a very simple sample sound change whereby \\"a\\" is turned into \\"b\\".")
+"This is a very simple sample sound change whereby \"a\" is turned into \"b\".")
 a2b
 }
 \seealso{

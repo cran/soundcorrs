@@ -1,3 +1,17 @@
+soundcorrs 0.4.0 (2020-11-14)
+=============================
+
+Additions
+* GUI now available via soundcorrsGUI (requires "shiny" and "shinyjqui").
+* applyChanges() now has the "highlight" argument.
+* findExamples() and soundchange() now have the "perl" argument.
+
+Changes
+* applyChanges() now takes soundcorrs objects instead od character vectors.
+* Vignette has been restructured and partially rewritten.
+
+
+
 soundcorrs 0.3.0 (2020-09-16)
 =============================
 
@@ -9,12 +23,14 @@ Additions
 * Expanded documentation.
 
 Changes
-* Sample transcription trans-common.tsv no longer contains metacharactes "x", "ɜ", and "ʌ".
-
-Removals
 * Sample datasets are no longer available in the precompiled form because CRAN
 	will not tolerate non-ASCII characters. They remain available through
-	system.file ("extdata", "trans-common.tsv", package="soundcorrs").
+	system.file ("extdata", "trans-common.tsv", package="soundcorrs"),
+	as well as through loadSampleDataset().
+
+Removals
+* Sample transcription trans-common.tsv no longer contains metacharactes "x", "ɜ", and "ʌ".
+
 
 
 soundcorrs 0.2.0 (2020-09-01)

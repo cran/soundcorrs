@@ -2,6 +2,14 @@
 
 ALIGNED.German	ORTHOGRAPHY.German	ALIGNED.Polish	ORTHOGRAPHY.Polish	ALIGNED.Spanish	ORTHOGRAPHY.Spanish	OFFICIAL.LANGUAGE
 a|m|s|t|ə|-|d|a|m	Amsterdam	a|m|s|t|e|r|d|a|m	Amsterdam	a|m|s|t|e|r|ð|a|m	Ámsterdam	Dutch
+a|t|ə|n|-|-	Athen	a|t|e|n|y|-	Ateny	a|t|e|n|a|s	Atenas	Greek
+b|ä|r|l|ī|n	Berlin	b|e|r|l|i|n	Berlin	b|e|r|l|i|n	Berlín	German
+b|r|a|t|ī|s|l|a|v|a	Bratislava	b|r|a|t|y|s|w|a|v|a	Bratysława	b|r|a|t|i|z|l|a|β|a	Bratislava	Slovak
+b|r|ü|-|s|ə|l|-|-	Brüssel	b|r|u|k|s|e|l|a|-	Bruksela	b|r|u|-|s|e|l|a|s	Bruselas	Dutch,French,German
+b|ū|d|a|p|ä|s|t	Budapest	b|u|d|a|p|e|š|t	Budapeszt	b|u|ð|a|p|e|s|t	Budapest	Hungarian
+b|ū|k|ā|r|ä|s|t	Bukarest	b|u|k|a|r|e|š|t	Bukareszt	b|u|k|a|r|e|s|t	Bucarest	Romanian
+d|a|b|l|i|n	Dublin	d|a|b|l|i|n	Dublin	d|u|β|l|i|n	Dublín	Irish,English
+h|ä|l|z|i|ŋk|-|ī	Helsinki	h|e|l|s|i|n|k|i	Helsinki	h|e|l|s|i|ŋk|-|i	Helsinki	Finnish,Swedish
 k|ō|p|ə|n|h|ā|g|ə|n	Kopenhagen	k|o|p|e|n|h|a|g|a|-	Kopenhaga	k|o|p|e|n|-|a|γ|e|-	Copenhague	Danish
 l|i|s|ā|b|o|n|-	Lissabon	l|i|z|-|b|o|n|a	Lizbona	l|i|z|-|β|o|-|a	Lisboa	Portuguese
 l|j|ū|b|l|j|ā|n|a	Ljubljana	l|j|u|b|l|j|a|n|a	Ljubljana	l|j|u|β|l|j|a|n|a	Liubliana	Slovenian
@@ -12,7 +20,6 @@ p|ā|r|ī|s	Paris	p|a|r|y|š	Paryż	p|a|r|i|s	París	French
 p|r|ā|k|-	Prag	p|r|a|g|a	Praga	p|r|a|γ|a	Praga	Czech
 r|ī|g|ā	Riga	r|y|g|a	Ryga	ɹ|i|γ|a	Riga	Latvian
 r|ō|m|-	Rom	ž|y|m|-	Rzym	ɹ|o|m|a	Roma	Italian
-a|t|ə|n|-|-	Athen	a|t|e|n|y|-	Ateny	a|t|e|n|a|s	Atenas	Greek
 z|ō|f|j|a	Sofia	s|o|f|j|a	Sofia	s|o|f|i|a	Sofía	Bulgarian
 -|š|t|o|k|h|o|l|m|-	Stockholm	-|š|t|o|k|h|o|l|m|-	Sztokholm	e|s|t|o|k|-|o|l|m|o	Estocolmo	Swedish
 t|a|l|i|n	Tallinn	t|a|l|i|n	Tallinn	t|a|ĺ|i|n	Tallin	Estonian
@@ -21,10 +28,3 @@ f|i|l|n|jus	Vilnius	v|i|l|n|o	Wilno	b|i|l|n|a	Vilna	Lithuanian
 v|a|r|š|a|u|-	Warschau	v|a|r|š|a|v|a	Warszawa	b|a|r|s|o|β|ja	Varsovia	Polish
 v|ī|-|-|-|n|-	Wien	ẃ|-|e|d|e|ń|-	Wiedeń	b|j|e|-|-|n|a	Viena	German
 z|ā|g|r|ä|p	Zagreb	z|a|g|ž|e|p	Zagrzeb	θ|a|γ|r|e|b	Zagreb	Croatian
-b|ä|r|l|ī|n	Berlin	b|e|r|l|i|n	Berlin	b|e|r|l|i|n	Berlín	German
-b|r|a|t|ī|s|l|a|v|a	Bratislava	b|r|a|t|y|s|w|a|v|a	Bratysława	b|r|a|t|i|z|l|a|β|a	Bratislava	Slovak
-b|r|ü|-|s|ə|l|-|-	Brüssel	b|r|u|k|s|e|l|a|-	Bruksela	b|r|u|-|s|e|l|a|s	Bruselas	Dutch,French,German
-b|ū|d|a|p|ä|s|t	Budapest	b|u|d|a|p|e|š|t	Budapeszt	b|u|ð|a|p|e|s|t	Budapest	Hungarian
-b|ū|k|ā|r|ä|s|t	Bukarest	b|u|k|a|r|e|š|t	Bukareszt	b|u|k|a|r|e|s|t	Bucarest	Romanian
-d|a|b|l|i|n	Dublin	d|a|b|l|i|n	Dublin	d|u|β|l|i|n	Dublín	Irish,English
-h|ä|l|z|i|ŋk|-|ī	Helsinki	h|e|l|s|i|n|k|i	Helsinki	h|e|l|s|i|ŋk|-|i	Helsinki	Finnish,Swedish

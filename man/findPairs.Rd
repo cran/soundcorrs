@@ -25,6 +25,12 @@ Sift the dataset for word pairs such that the first word contains \code{x} and t
 }
 \details{
 Probably the most common usage of \code{\link{findExamples}} is with datasets containing pairs of words. This function is a simple wrapper around \code{\link{findExamples}} which hopes to facilitate its use in this most common case. Instead of the five arguments that \code{\link{findExamples}} requires, this function only takes two. It is, of course, at the cost of control but should a more fine-tuned search be required, \code{\link{findExamples}} can always still be used instead of \code{findPairs}.
+
+The default is the inexact mode (\code{exact} set to \code{0} or \code{FALSE}). It corresponds to \code{distance.start} and \code{distance.end} being both set to \code{-1}, \code{na.value} being set to \code{0}, and \code{zeros} being set to \code{FALSE}, which are also the default settings in \code{findExamples()}. The risk here are false positives. In my experience, however, those are rare, and because they are displayed, the user has a chance to spot them.
+
+The opposite is the exact mode (\code{exact} set to 1 or \code{TRUE}), which corresponds to \code{distance.start} and \code{distance.end} being both set to \code{0}, \code{na.value} being set to \code{-1}, and \code{zeros} to \code{TRUE}. The risk are false negatives, in my experience both much more common than false positives in the inexact mode, and effectively impossible to spot as they are simply not displayed.
+
+A middle ground is the semi-exact mode (\code{exact} set to 0.5), where \code{distance.start} and \code{distance.end} are both set to \code{1}, \code{na.value} is set to \code{0}, and \code{zeros} to \code{FALSE}. It decreases the risk of false positives while increasing only a little the risk of false negatives.
 }
 \examples{
 # In the examples below, non-ASCII characters had to be escaped for technical reasons.

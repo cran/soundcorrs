@@ -49,7 +49,7 @@ soundcorrs <- function (data, name, col.aligned, transcription, separator="\\|")
 	if (class(col.aligned) != "character")
 		stop ("\"col.aligned\" must be a string.")
 	if (class(transcription) != "transcription")
-		stop ("\"col.aligned\" must be a \"transcription\" object")
+		stop ("\"transcription\" must be a \"transcription\" object")
 	if (class(separator) != "character")
 		stop ("\"separator\" must be a string.")
 
@@ -478,6 +478,207 @@ allCooccs.soundcorrs <- function (data, column=NULL, count="a", unit="w", bin=T)
 }
 
 # -------------------------------------------------------------------------------------------------- >>> -
+# - exp applyChanges.soundcorrs -------------------------------------------------------------------- <<< -
+
+#' @title Apply a series of sound changes to a series of words.
+#' @description Apply a list of \code{\link{soundchange}}'s to a series of words, possibly with additional metadata, and possibly compare the results to a prediction.
+#' @param data [soundcorrs] A \code{\link{soundcorrs}} object.
+#' @param changes [soundchange] The list of \code{\link{soundchange}}'s to apply.
+#' @param source [character] Name of the column containing words to which to apply \code{\link{soundchange}}'s.
+#' @param target [character] Name of the column containing words to which to compare the results. Defaults to \code{NULL}.
+#' @param meta [character] Name of the column containing metadata to be passed to \code{\link{soundchange}} functions alongside words. Defaults to \code{NULL}.
+#' @param highlight [character] Highlight the differences between the intermediate forms in \code{$tree}, as well as between the results in \code{$end} and \code{target}? Can be \code{NULL} (do not highlight), \code{"console"} (highlight for the console), or \code{"HTML"} (highlight for a web browser). Defaults to \code{NULL}.
+#' @details Functions in \code{\link{soundchange}} objects are allowed to return more than one value, which makes manual application of a series of changes highly inconvenient and prone to errors. This function automates the process, while keeping track of all the intermediate forms. It returns the result in three formats: only the final shapes; their comparison to the shapes given under the \code{target} argument; and a tree with all the steps along the way. By default, only the final shapes are printed. All the three formats are accessible as elements of a named list: \code{$end}, \code{$match}, and \code{$tree}, respectively.
+#'
+#'	Note that the application of sound changes does not require the data to be segmented and aligned. If sound changes are the only goal of the project, these two time-consuming steps can be safely omitted.
+#' @return [list.applyChanges] A list with three fields: \code{$end}, a named list with the final results; \code{$match}, a named list with one of three values: \code{0} when none of the final results matches the \code{target}, \code{0.5} when at least one of the final results matches the \code{target}, or \code{1} when all the final results match the \code{target}; lastly \code{$tree}, a list tracing all the intermediate forms.
+#' @seealso \code{\link{print.list.applyChanges}}, \code{\link{print.tree.applyChanges}}
+#' @export
+#' @examples
+#' # prepare sample data
+#' dataset <- loadSampleDataset ("data-capitals")
+#' changes <- list (loadSampleDataset("change-dl2l"), loadSampleDataset("change-rhotacism"))
+#' # apply the changes
+#' applyChanges (dataset, changes, "ORTHOGRAPHY.German")
+#' applyChanges (dataset, changes, "ORTHOGRAPHY.German")$tree
+#' applyChanges (dataset, changes, "ORTHOGRAPHY.German", "ORTHOGRAPHY.Polish", highlight="console")
+
+applyChanges <- function (data, changes, source, target, meta, highlight)
+	UseMethod ("applyChanges")
+
+#' @export
+applyChanges.default <- function (data, changes, source, target, meta, highlight)
+	stop ("This function does not know how to handle an object of class \"",class(data),"\".")
+
+#' @export
+applyChanges.soundcorrs <- function (data, changes, source, target=NULL, meta=NULL, highlight=NULL) {
+
+# - applyChangesHlp - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -<<< -
+
+	applyChangesHlp <- function (chngs, src, meta, hightd)
+
+		# it's a recursive function
+		if (length(chngs)==0) src else
+
+			# src may contain multiple strings
+			mapply (function (s, m) {
+
+				# apply the change
+				ends <- chngs[[1]]$fun (s$start, m)
+
+				# prepare highlights for the next iteration
+				highs <- highlight (ends, s$start, highlight)
+
+				# wrap in a list so the next iteration can handle it
+				ends <- mapply (function(x,y) list(start=x,high=y), ends, highs, SIMPLIFY=F)
+
+				# return the recursive result
+				list(start	= s$start
+					,high	= s$high
+					,change	= chngs[[1]]$name
+					,end	= applyChangesHlp (chngs[-1], ends, if (is.null(m)) list(m) else m, highs)
+				)
+
+			}, src, meta, SIMPLIFY=F)
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ->>> -
+
+	# check args
+	if (class(changes)!="list" | !identical (unique(unlist(lapply(changes,class))),"soundchange"))
+		stop ("\"changes\" must be a list of \"soundchange\"'s.")
+	if (any(c(source,target,meta) %nin% colnames(data$data)))
+		stop ("One or more column names are missing from \"data\".")
+	if (!is.null(highlight) && highlight %nin% c("console","HTML"))
+		stop ("\"highlight\" must be NULL, \"console\", or \"HTML\".")
+
+	# prep vars
+	src <- lapply (data$data[,source], function(x) list(start=x))
+	target <- if (!is.null(target)) data$data[,target]
+	meta <- if (!is.null(meta)) data$data[,meta] else rep(list(NULL),length(src))
+	highlight <- if (is.null(highlight)) NULL else switch (highlight,
+		"console" = c ("\u001b[31m", "\u001b[0m"),
+		"HTML" = c ("<span style=\"color:rgb(255,0,0);\">", "</span>"))
+
+	# apply the changes
+	tree <- applyChangesHlp (changes, src, meta)
+	class(tree) <- "tree.applyChanges"
+
+	# extract the final results
+	end <- lapply (tree, getEnds <- function (x)
+		if (is.null(x$end)) x$start else sapply(x$end,getEnds))
+	end <- lapply (end, as.vector)
+
+	# highlight the differences, maybe
+	if (!is.null(target) & !is.null(highlight))
+		end <- mapply (function(e,t) highlight(e,t,highlight), end, target)
+
+	# compare the results to target, maybe
+	match <- if (is.null(target)) NULL else
+		mapply (function(e,t) if (all(e==t)) 1 else if (any(e==t)) 0.5 else 0, end, target, SIMPLIFY=F)
+
+	# fix the names
+	names(end) <- names(tree) <- data$data[,source]
+	if (!is.null(match)) names(match) <- data$data[,source]
+
+	# wrap the result in an object
+	res <- list (
+		end = end,
+		match = match,
+		tree = tree
+	)
+	class(res) <- "list.applyChanges"
+
+	# and return it
+	return (res)
+
+}
+
+# - exp print.list.applyChanges -------------------------------------------------------------------- <<< -
+
+#' @title Pretty printing for the result of \code{\link{applyChanges}}.
+#' @param x [list.applyChanges] The output of \code{\link{applyChanges}}.
+#' @param ... Unused; only for consistency with \code{\link{print}}.
+#' @details The output of \code{\link{applyChanges}} is a list, potentially a very long one, and difficult to read. To make it easier to digest, this function only prints the \code{$end} element, i.e. the final shapes produced by the application of all of the sound changes.
+#' @return [list.applyChanges] The same object that was given as \code{x}.
+#' @seealso \code{\link{applyChanges}}, \code{\link{print.tree.applyChanges}}
+#' @export
+#' @examples
+#' # prepare sample data
+#' dataset <- loadSampleDataset ("data-capitals")
+#' changes <- list (loadSampleDataset("change-dl2l"), loadSampleDataset("change-rhotacism"))
+#' # apply the changes
+#' applyChanges (dataset, changes, "ORTHOGRAPHY.German")
+#' applyChanges (dataset, changes, "ORTHOGRAPHY.German", "ORTHOGRAPHY.Polish", highlight="console")
+
+print.list.applyChanges <- function (x, ...) {
+
+	# must be cat to get coloured output
+	for (i in seq_along(x$end)) {
+		cat (paste0 ("$`", names(x$end)[i], "`", "\n"))
+		cat (collapse ("\"", x$end[[i]], "\"", inter=" "))
+		cat ("\n\n")
+	}
+
+	# return the object, invisibly
+	invisible (x)
+
+}
+
+# -------------------------------------------------------------------------------------------------- >>> -
+# - exp print.tree.applyChanges -------------------------------------------------------------------- <<< -
+
+#' @title Pretty printing for part of the result of \code{\link{applyChanges}}.
+#' @param x [tree.applyChanges] The \code{tree} element in the output of \code{\link{applyChanges}}.
+#' @param ... Unused; only for consistency with \code{\link{print}}.
+#' @details One of the elements in the output of \code{\link{applyChanges}} is a tree. It is represented as a nested list, potentially a very deeply nested and a very long list which would have been all but impossible to digest for a human. This function prints it as a structure that more resembles a tree, very similar to the output of \code{\link{str}}.
+#' @return [tree.applyChanges] The same object that was given as \code{x}.
+#' @seealso \code{\link{applyChanges}}, \code{\link{print.list.applyChanges}}
+#' @export
+#' @examples
+#' # prepare sample data
+#' dataset <- loadSampleDataset ("data-capitals")
+#' changes <- list (loadSampleDataset("change-dl2l"), loadSampleDataset("change-rhotacism"))
+#' # apply the changes
+#' applyChanges (dataset, changes, "ORTHOGRAPHY.German")$tree
+
+print.tree.applyChanges <- function (x, ...) {
+
+# - hlp - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -<<< -
+
+	hlp <- function (y, lvl)
+
+		# it's a recursive function
+		if (length(y) > 0)
+
+			# print all the branches
+			lapply (y, function (z) {
+
+				# do the printing
+				cat (paste0 (lvl, " "))
+				cat (collapse(rep(".. ",lvl-1), inter=""))
+				if (is.null(z$high)) cat(z$start) else cat(z$high)
+				if (!is.null(z$change)) cat(paste0(" [", z$change, "]"))
+				cat ("\n")
+
+				# continue onto the branches
+				hlp (z$end, lvl+1)
+
+			})
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ->>> -
+
+	# do the printing
+	hlp (x, 1)
+	cat ("\n")
+
+	# return the object, invisibly
+	invisible (x)
+
+}
+
+# -------------------------------------------------------------------------------------------------- >>> -
+
+# -------------------------------------------------------------------------------------------------- >>> -
 # - exp cbind.soundcorrs --------------------------------------------------------------------------- <<< -
 
 #' @title Attach one or more columns to a \code{\link{soundcorrs}} object.
@@ -603,9 +804,10 @@ coocc.soundcorrs <- function (data, column=NULL, count="a", unit="w") {
 #' @param ... [character] Sequences for which to look. May be regular expressions as defined in R, or in the \code{\link{transcription}}. If an empty string, anything will be considered a match.
 #' @param distance.start [integer] The allowed distance between segments where the sound sequences begin. A negative value means alignment of the beginning of sequences will not be checked. Defaults to -1.
 #' @param distance.end [integer] The allowed distance between segments where the sound sequences end. A negative value means alignment of the end of sequences will not be checked. Defaults to -1.
-#' @param na.value [numeric] Treat \code{NA}'s as matches (\code{0}) or non-matches (\code{-1})? Defaults to \code{0}.
+#' @param na.value [numeric] Treat \code{NA}'s as matches (\code{0}) or non-matches (\code{-1})? Note that an empty string query takes precedence over \code{na.value}, that is even whan \code{na.value} is set to \code{-1}, \code{NA}'s will show up in the results when the query is an empty string. Defaults to \code{0}.
 #' @param zeros [logical] Take linguistic zeros into account? Defaults to \code{FALSE}.
 #' @param cols [character vector] Which columns of the dataset to return as the result. Can be a vector of names, \code{"aligned"} (the two columns with segmented, aligned words), or \code{"all"} (all columns). Defaults to \code{"aligned"}.
+#' @param perl [logical] Use Perl-compatible regular expressions? Defaults to \code{FALSE}.
 #' @details One of the more time-consuming tasks, when working with sound correspondences, is looking for specific examples which realize the given correspondence. \code{findExamples} can fully automate this process. It has several arguments that can help fine-tune the search, of which perhaps the most important are \code{distance.start} and \code{distance.end}. It should be noted that their default values (\code{-1} for both) mean that \code{findExamples} will find every such pair/triple/... of words, that the first word contains the first query, the second word the second query, etc. -- regardless of whether these segments do in fact correspond to each other in the alignment. This is intentional, and stems from the assumption that in this case, false positives are generally less harmful, and most of all easier to spot than false negatives.
 #'
 #'	\code{findExamples} accepts regular expressions in queries, both such as are available in pure R, and such as have been defined in the \code{\link{transcription}}, in both notations accepted by \code{\link{expandMeta}}. It is highly recommended that the user acquaints him or herself with the concept, as it is in it that the true power of \code{findExamples} lies.
@@ -623,6 +825,8 @@ coocc.soundcorrs <- function (data, column=NULL, count="a", unit="w") {
 #' findExamples (dataset, "a", "a", "a")
 #' # find examples where German has schwa, and Polish and Spanish have a Vr sequence
 #' findExamples (dataset, "\u0259", "Vr", "Vr")
+#' # as above, but the schwa and the two vowels must be in the same segment
+#' findExamples (dataset, "\u0259", "V(?=r)", "V(?=r)", distance.start=0, distance.end=0, perl=TRUE)
 #' # find examples where German has a-umlaut, Polish has a or e, and Spanish has any sound at all
 #' findExamples (dataset, "\u00E4", "[ae]", "")
 #' # find examples where German has a linguistic zero while Polish and Spanish do not
@@ -632,16 +836,17 @@ coocc.soundcorrs <- function (data, column=NULL, count="a", unit="w") {
 #' # as above, but the schwa and the two a's must be in the same segment
 #' findExamples (dataset, "\u0259", "a", "a", distance.start=0, distance.end=0)
 
-findExamples <- function (data, ..., distance.start, distance.end, na.value, zeros, cols)
+findExamples <- function (data, ..., distance.start, distance.end, na.value, zeros, cols, perl)
 	UseMethod ("findExamples")
 
 #' @export
-findExamples.default <- function (data, ..., distance.start, distance.end, na.value, zeros, cols)
+findExamples.default <- function (data, ..., distance.start, distance.end, na.value, zeros, cols, perl)
 	stop ("This function does not know how to handle an object of class \"",class(data),"\".")
 
 #' @export
-findExamples.soundcorrs <-
-	function (data, ..., distance.start=-1, distance.end=-1, na.value=0, zeros=F, cols="aligned") {
+findExamples.soundcorrs <- function (data, ...,
+	distance.start=-1, distance.end=-1, na.value=0, zeros=F,
+	cols="aligned", perl=F) {
 
 # - sift - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - <<< -
 
@@ -710,7 +915,7 @@ findExamples.soundcorrs <-
 	expanded <- mapply (expandMeta, trans, quer)
 
 	# find the starts of matches
-	starts <- mapply (gregexpr, expanded, words, SIMPLIFY=F)
+	starts <- mapply (gregexpr, expanded, words, MoreArgs=list(perl=perl), SIMPLIFY=F)
 
 	# fix empty strings and NAs
 	starts[quer==""] <- rapply (starts[quer==""], function(...) 0, how="replace")
@@ -739,6 +944,34 @@ findExamples.soundcorrs <-
 
 }
 
+# - exp print.df.findExamples ---------------------------------------------------------------------- <<< -
+
+#' @title Pretty printing for the result of \code{\link{findExamples}}.
+#' @param x [df.findExamples] The output of \code{\link{findExamples}}.
+#' @param ... Unused; only for consistency with \code{\link{print}}.
+#' @details The output of \code{\link{findExamples}} is a list, potentially a very long one, and difficult to read. To make it easier to digest, this function only prints the \code{$data} element, i.e. the found matches.
+#' @return [df.findExamples] The same object that was given as \code{x}.
+#' @seealso \code{\link{findExamples}}
+#' @export
+#' @examples
+#' dataset <- loadSampleDataset ("data-capitals")
+#' findExamples (dataset, "a", "a", "a", cols="all")
+
+print.df.findExamples <- function (x, ...) {
+
+	# do the printing
+	if (nrow(x$data) > 0)
+		print (x$data)
+	else
+		cat ("No matches found.\n")
+
+	# return the object, invisibly
+	invisible (x)
+
+}
+
+# -------------------------------------------------------------------------------------------------- >>> -
+
 # -------------------------------------------------------------------------------------------------- >>> -
 # - exp findPairs.soundcorrs ----------------------------------------------------------------------- <<< -
 
@@ -750,6 +983,12 @@ findExamples.soundcorrs <-
 #' @param exact [numeric] If 0 or \code{FALSE}, \code{distance.start}=\code{distance.end}=-1, \code{na.value}=0, and \code{zeros}=\code{FALSE}. If 0.5, \code{distance.start}=\code{distance.end}=1, \code{na.value}=0, and \code{zeros}=\code{FALSE}. If 1 or \code{TRUE}, \code{distance.start}=\code{distance.end}=0, \code{na.value}=-1, and \code{zeros}=\code{TRUE}. Defaults to 0.
 #' @param cols [character vector] Which columns of the dataset to return as the result. Can be a vector of names, \code{"aligned"} (the two columns with segmented, aligned words), or \code{"all"} (all columns). Defaults to \code{"aligned"}.
 #' @details Probably the most common usage of \code{\link{findExamples}} is with datasets containing pairs of words. This function is a simple wrapper around \code{\link{findExamples}} which hopes to facilitate its use in this most common case. Instead of the five arguments that \code{\link{findExamples}} requires, this function only takes two. It is, of course, at the cost of control but should a more fine-tuned search be required, \code{\link{findExamples}} can always still be used instead of \code{findPairs}.
+#'
+#' The default is the inexact mode (\code{exact} set to \code{0} or \code{FALSE}). It corresponds to \code{distance.start} and \code{distance.end} being both set to \code{-1}, \code{na.value} being set to \code{0}, and \code{zeros} being set to \code{FALSE}, which are also the default settings in \code{findExamples()}. The risk here are false positives. In my experience, however, those are rare, and because they are displayed, the user has a chance to spot them.
+#'
+#' The opposite is the exact mode (\code{exact} set to 1 or \code{TRUE}), which corresponds to \code{distance.start} and \code{distance.end} being both set to \code{0}, \code{na.value} being set to \code{-1}, and \code{zeros} to \code{TRUE}. The risk are false negatives, in my experience both much more common than false positives in the inexact mode, and effectively impossible to spot as they are simply not displayed.
+#'
+#' A middle ground is the semi-exact mode (\code{exact} set to 0.5), where \code{distance.start} and \code{distance.end} are both set to \code{1}, \code{na.value} is set to \code{0}, and \code{zeros} to \code{FALSE}. It decreases the risk of false positives while increasing only a little the risk of false negatives.
 #' @return [df.findExamples] A subset of the dataset, containing only the pairs with corresponding sequences. Warning: pairs with multiple occurrences of such sequences are only included once.
 #' @seealso \code{\link{findExamples}}, \code{\link{allPairs}}
 #' @export
@@ -874,33 +1113,6 @@ merge.soundcorrs <- function (...) {
 
 }
 # -------------------------------------------------------------------------------------------------- >>> -
-# - exp print.df.findExamples ---------------------------------------------------------------------- <<< -
-
-#' @title Pretty printing for the result of \code{\link{findExamples}}.
-#' @param x [df.findExamples] The output of \code{\link{findExamples}}.
-#' @param ... Unused; only for consistency with \code{\link{print}}.
-#' @details The output of \code{\link{findExamples}} is a list, potentially a very long one, and difficult to read. To make it easier to digest, this function only prints the \code{$data} element, i.e. the found matches.
-#' @return [df.findExamples] The same object that was given as \code{x}.
-#' @seealso \code{\link{findExamples}}
-#' @export
-#' @examples
-#' dataset <- loadSampleDataset ("data-capitals")
-#' findExamples (dataset, "a", "a", "a", cols="all")
-
-print.df.findExamples <- function (x, ...) {
-
-	# do the printing
-	if (nrow(x$data) > 0)
-		print (x$data)
-	else
-		cat ("No matches found.\n")
-
-	# return the object, invisibly
-	invisible (x)
-
-}
-
-# -------------------------------------------------------------------------------------------------- >>> -
 # - exp print.soundcorrs --------------------------------------------------------------------------- <<< -
 
 #' A more reasonable display of a \code{\link{soundcorrs}} object.
@@ -921,6 +1133,8 @@ print.soundcorrs <- function (x, ...) {
 	cat (paste0("  Languages (", length(x$names), "): ", collapse(x$names, inter=", "), ".\n"))
 	cat (paste0("  Entries: ", nrow(x$data), ".\n"))
 	cat (paste0("  Columns (", ncol(x$data), "): ", collapse(colnames(x$data),inter=", "), ".\n"))
+	if (!is.null(attr(x,"file")))
+		cat (paste0("  File: ", attr(x,"file"), ".\n"))
 	cat ("\n")
 
 	# and return it under the counter
@@ -939,7 +1153,7 @@ print.soundcorrs <- function (x, ...) {
 #' @param transcription [character] Path to the file with the transcription.
 #' @param separator [character] String used to separate segments in \code{col.aligned}. Defaults to \code{"\\|"}.
 #' @details The constructor for the \code{\link{soundcorrs}} class requires a data frame and a \code{\link{transcription}} object which means that the user would need to first read both from a file, and only then pass them to the constructor. This function saves these two steps. In addition, it attaches the name of the file to the object, which allows for easier identification later. It is recommended to use \code{read.soundcorrs} instead of the raw \code{\link{soundcorrs}} constructor whenever possible.
-#' @return [scOne] An object containing the data and metadata for one language.
+#' @return [soundcorrs] An object containing the data and metadata for one language.
 #' @seealso \code{\link{soundcorrs}}
 #' @export
 #' @importFrom utils read.table
@@ -1016,7 +1230,7 @@ subset.soundcorrs <- function (x, condition, ...) {
 #' @param object [soundcorrs] The dataset from which to draw frequencies. Only datasets with two languages are supported.
 #' @param count [character] Report either the absolute or the relative numbers?. Accepted values are \code{"a(bs(olute))"} and \code{"r(el(ative))"}. Defaults to "a".
 #' @param unit [character] Count how many times a correspondence occurs or in how many words it occurs? Accepted values are \code{"o(cc(ur(ence(s))))"} and \code{"w(or(d(s)))"}. Defaults to \code{"w"}.
-#' @param ... Unused; only for consistency with \code{\link{print}}.
+#' @param ... Unused; only for consistency with \code{base::\link{summary}}.
 #' @details A set of segmented and aligned word pairs/triples/..., such as one held in a \code{\link{soundcorrs}} object, can be turned into a contingency table in more than one way. Perhaps the simplest option is to see how often various segments from one language correspond to various segments from another language, which is the kind of table this function produces. Correspondences can be reported in absolute or relative numbers, and can represent the number of times the given correspondence occurs, or in how many words it occurs (the same correspondence can occur more than once in a single pair/triple/... of words, e.g. in German koala : French koala, the correspondence G a : Fr a occurs twice). When the numbers are relative, each row in the table adds up to 1. In theory, \code{summary.soundcorrs} can support a \code{\link{soundcorrs}} objects with any number of languages in it, but the legibility of the output drops very quickly when that number exceeds two.
 #' @return [table] The contingency table. The values represent how often the given segments correspond to each other, not how often they co-occur in the same word (cf. \code{\link{coocc}}).
 #' @seealso \code{\link{coocc}}
@@ -1055,7 +1269,10 @@ summary.soundcorrs <- function (object, count="a", unit="w", ...) {
 
 	# convert to relative, maybe
 	if (count == "r")
-		res <- tabAbs2Rel (res, "")
+		if (length(object$names) <= 2)
+			res <- tabAbs2Rel (res, "")
+		else
+			warning ("Relative count only available for datasets with up to two languages.")
 
 	# return the result
 	return (res)

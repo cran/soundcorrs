@@ -4,8 +4,7 @@
 \alias{read.soundcorrs}
 \title{Read data for a single language from a tsv file.}
 \usage{
-read.soundcorrs(file, name, col.aligned, transcription,
-  separator = "\\\\|")
+read.soundcorrs(file, name, col.aligned, transcription, separator = "\\\\|")
 }
 \arguments{
 \item{file}{[character] Path to the data file in the wide format.}
@@ -19,7 +18,7 @@ read.soundcorrs(file, name, col.aligned, transcription,
 \item{separator}{[character] String used to separate segments in \code{col.aligned}. Defaults to \code{"\\|"}.}
 }
 \value{
-[scOne] An object containing the data and metadata for one language.
+[soundcorrs] An object containing the data and metadata for one language.
 }
 \description{
 Read the data for one language, from a file in the wide format, and combine it with metadata into a \code{\link{soundcorrs}} object. To obtain a \code{soundcorrs} object containing data for multiple languages, see \code{\link{merge.soundcorrs}}.

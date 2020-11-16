@@ -4,8 +4,12 @@
 \alias{read.transcription}
 \title{Read transcription from a tsv file.}
 \usage{
-read.transcription(file, col.grapheme = "GRAPHEME", col.meta = "META",
-  col.value = "VALUE")
+read.transcription(
+  file,
+  col.grapheme = "GRAPHEME",
+  col.meta = "META",
+  col.value = "VALUE"
+)
 }
 \arguments{
 \item{file}{[character] Path to the data file.}

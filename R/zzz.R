@@ -1,5 +1,8 @@
 # vim: set shiftwidth=4 tabstop=4 foldmarker=<<<,>>>:
 
 .onAttach <- function (libname, pkgname) {
-	packageStartupMessage ("NOTE. Version 0.2.0 introduced some important changes.\nPlease run vignette(\"soundcorrs\")\n and consult https://cran.r-project.org/web/packages/soundcorrs/NEWS.\n")
+	if (.Platform$OS.type == "windows")
+		packageStartupMessage ("To start the graphic interface, run \"soundcorrsGUI()\"\n(requires packages \"shiny\" and \"shinyjqui\").\nCaution! R does not really support Unicode under Windows.\nPlease only use ASCII (X-SAMPA or any other substitution).\n")
+	else
+		packageStartupMessage ("To start the graphic interface, run \"soundcorrsGUI()\"\n(requires packages \"shiny\" and \"shinyjqui\").\n")
 }

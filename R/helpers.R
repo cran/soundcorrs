@@ -101,6 +101,42 @@ collapse <- function (..., inter="")
 	paste0 (collapse=inter, ...)
 
 # -------------------------------------------------------------------------------------------------- >>> -
+# - highlight -------------------------------------------------------------------------------------- <<< -
+
+#' @title Highlight differences between strings.
+#' @description Add a prefix and a suffix to all the substrings that are different between a vector of source strings, and a target string.
+#' @param source [character] A vector of strings to be highlighted.
+#' @param target [character] A string to which \code{source} strings are to be compared.
+#' @param affixes [character] A vector of two strings: the first to be prepended to highlighted bits, and the second to be appended to them.
+#' @details The effect is similar to Unix \code{diff}, only all the differences are highlighted in the same colour, and a \code{"_"} is inerted where characters are missing. To save on speed, the function does not check the arguments are correct, etc.
+#' @return [character] The highlighted strings.
+#' @keywords internal
+#' @importFrom utils adist
+#' @examples
+#' cat (soundcorrs:::highlight (c("kitten","mitten"), "sitting", c("\u001b[31m","\u001b[0m")))
+
+highlight <- function (source, target, affixes) {
+
+	# find the transformation sequence
+	trafos <- attr (adist(source,target,counts=T), "trafos")
+
+	# mark places of insertion
+	res <- gsub ("I", "_", trafos)
+
+	# replace matching characters in res with counterparts from source
+	regmatches(res,gregexpr("[^I]",trafos)) <- strsplit (as.character(source), "")
+
+	# replace non-matching characters in res with themselves but highlighted
+	tmp <- gregexpr ("[^M]+", trafos)
+	regmatches(res,tmp) <- rapply (regmatches(res,tmp), function (x)
+		paste0 (affixes[1], x, affixes[2]), how="replace")
+
+	# return the result
+	return (res)
+
+}
+
+# -------------------------------------------------------------------------------------------------- >>> -
 # - list.depth ------------------------------------------------------------------------------------- <<< -
 
 #' @title Measure the depth of a nested list.
@@ -138,6 +174,21 @@ list.transpose <- function (x) {
 	x <- do.call (rbind, x)
 	lapply (setNames (seq(ncol(x)), colnames(x)), function(j) x[,j])
 }
+
+# -------------------------------------------------------------------------------------------------- >>> -
+# - path2name -------------------------------------------------------------------------------------- <<< -
+
+#' @title Extract file name from path string.
+#' @description Convert a path to file to just its name, without the path or the extension.
+#' @param x [character] Path to a file.
+#' @details A combination of \code{\link{basename}} to strip the path, and \code{tools::file_path_sans_ext} to strip the extension.
+#' @return [character] The name of the file.
+#' @keywords internal
+#' @importFrom tools file_path_sans_ext
+#' @examples
+#' sapply (list.files("~",full.names=TRUE), soundcorrs:::path2name)
+
+path2name <- basename %.% tools::file_path_sans_ext
 
 # -------------------------------------------------------------------------------------------------- >>> -
 # - tabAbs2Rel ------------------------------------------------------------------------------------- <<< -
@@ -256,102 +307,6 @@ addSeparators <- function (x, separator="|")
 			y
 		else
 			paste0 (strsplit(as.character(y),"")[[1]], collapse=separator)))
-
-# -------------------------------------------------------------------------------------------------- >>> -
-# - exp applyChanges ------------------------------------------------------------------------------- <<< -
-
-#' @title Apply a series of sound changes to a vector of characters strings.
-#' @description Apply a list of \code{\link{soundchange}}'s to a vector of charcter strings, possibly with additional metadata, and possibly compare the results to a prediction.
-#' @param data [character] The strings to which to apply the changes.
-#' @param changes [soundchange] The list of \code{\link{soundchange}}'s to apply.
-#' @param target [character] The strings to which to compare the results. Defaults to \code{NULL}.
-#' @param meta [list] Additional metadata to pass to \code{\link{soundchange}} functions. Must be the same length as \code{data}. Defaults to \code{NULL}.
-#' @details Functions in \code{\link{soundchange}} objects are allowed to return more than one value, which makes manual application of a series of changes highly inconvenient and prone to errors. This function automates the process, while keeping track of all the intermediate forms. It returns the result in three formats: only the final shapes, their comparison to the shapes given under the \code{target} argument, and a tree with all the steps along the way. By default, only the final shapes are printed. The other two formats are accessible as simply elements of a named list.
-#'
-#'	Note that the application of sound changes does not require the data to be segmented and aligned. If sound changes are the only goal of the project, these two time-consuming steps can be safely omitted.
-#' @return [list.applyChanges] A list with three fields: \code{$end}, a named list with the final results; \code{$match}, a named list with one of three values: \code{0} when none of the final results matches the \code{target}, \code{0.5} when at least one of the final results matches the \code{target}, or \code{1} when all the final results match the \code{target}; lastly \code{$tree}, a list tracing all the intermediate forms.
-#' @seealso \code{\link{print.list.applyChanges}}, \code{\link{print.tree.applyChanges}}
-#' @export
-#' @examples
-#' # prepare sample transcription
-#' trans <- loadSampleDataset ("trans-common")
-#' # define sound changes and data
-#' i2a <- soundchange ("i > a", "lowering", trans)
-#' a2u <- soundchange ("a > u", "backing", trans)
-#' dataset <- c ("begin", "ring", "swim")
-#' # apply the changes
-#' applyChanges (dataset, list(i2a,a2u))
-#' applyChanges (dataset, list(i2a,a2u))$tree
-
-applyChanges <- function (data, changes, target=NULL, meta=NULL) {
-
-# - applyChangesHlp - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -<<< -
-
-	applyChangesHlp <- function (chngs, src, meta)
-
-		# it's a recursive function
-		if (length(chngs)==0) src else
-
-			# src may contain multiple strings
-			mapply (function (s, m) {
-
-				# apply the change
-				tmp <- chngs[[1]]$fun (s$start, m)
-
-				# wrap in a list so the next iteration can handle it
-				tmp <- lapply (tmp, function(x) list(start=x))
-
-				# return the recursive result
-				list(start	= s$start
-					,change	= chngs[[1]]$name
-					,end	= applyChangesHlp (chngs[-1], tmp, if (is.null(m)) list(m) else m)
-				)
-
-			}, src, meta, SIMPLIFY=F)
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ->>> -
-
-	# check args
-	if (class(changes)!="list" | !identical (unique(unlist(lapply(changes,class))),"soundchange"))
-		stop ("\"changes\" must be a list of \"soundchange\"'s.")
-	if (!is.null(target) && length(data)!=length(target))
-		stop ("\"data\" and \"meta\" must be of the same length.")
-	if (!is.null(meta) && length(data)!=length(meta))
-		stop ("\"data\" and \"meta\" must be of the same length.")
-
-	# prep vars
-	src <- lapply (data, function(x) list(start=x))
-	if (is.null(meta)) meta<-rep(list(NULL),length(src))
-
-	# apply the changes
-	tree <- applyChangesHlp (changes, src, meta)
-	class(tree) <- "tree.applyChanges"
-
-	# extract the final results
-	end <- lapply (tree, getEnds <- function (x)
-		if (is.null(x$end)) x$start else sapply(x$end,getEnds))
-	end <- lapply (end, as.vector)
-
-	# compare the results to target, maybe
-	match <- if (is.null(target)) NULL else
-		mapply (function(e,t) if (all(e==t)) 1 else if (any(e==t)) 0.5 else 0, end, target, SIMPLIFY=F)
-
-	# fix the names
-	names(end) <- names(tree) <- data
-	if (!is.null(match)) names(match)<-data
-
-	# wrap the result in an object
-	res <- list (
-		end = end,
-		match = match,
-		tree = tree
-	)
-	class(res) <- "list.applyChanges"
-
-	# and return it
-	return (res)
-
-}
 
 # -------------------------------------------------------------------------------------------------- >>> -
 # - exp binTable ----------------------------------------------------------------------------------- <<< -
@@ -671,7 +626,9 @@ loadSampleDataset <- function (x) {
 			tmp <- long2wide (read.table(path.d,header=T), skip=c("ID"))
 			d.l1 <- soundcorrs (tmp, "L1", "ALIGNED.L1", trans)
 			d.l2 <- soundcorrs (tmp, "L2", "ALIGNED.L2", trans)
-			merge (d.l1, d.l2)
+			res <- merge (d.l1, d.l2)
+			attr(res,"file") <- path.d
+			res
 		},
 		"data-capitals" = {
 			path.t <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
@@ -679,7 +636,9 @@ loadSampleDataset <- function (x) {
 			d.ger <- read.soundcorrs (path.d, "German", "ALIGNED.German", path.t)
 			d.pol <- read.soundcorrs (path.d, "Polish", "ALIGNED.Polish", path.t)
 			d.spa <- read.soundcorrs (path.d, "Spanish", "ALIGNED.Spanish", path.t)
-			merge (d.ger, d.pol, d.spa)
+			res <- merge (d.ger, d.pol, d.spa)
+			attr(res,"file") <- path.d
+			res
 		},
 		"data-ie" = {
 			path.tc <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
@@ -687,7 +646,9 @@ loadSampleDataset <- function (x) {
 			path.d <- system.file ("extdata", "data-ie.tsv", package="soundcorrs")
 			d.lat <- read.soundcorrs (path.d, "Latin", "LATIN", path.tc)
 			d.eng <- read.soundcorrs (path.d, "English", "ENGLISH", path.ti)
-			merge (d.lat, d.eng)
+			res <- merge (d.lat, d.eng)
+			attr(res,"file") <- path.d
+			res
 		},
 		"trans-common" = {
 			path.t <- system.file ("extdata", "trans-common.tsv", package="soundcorrs")
@@ -896,89 +857,6 @@ ngrams <- function (x, n=1, borders=c("",""), rm="", as.table=T) {
 
 	# return the result
 	return (res)
-
-}
-
-# -------------------------------------------------------------------------------------------------- >>> -
-# - exp print.list.applyChanges -------------------------------------------------------------------- <<< -
-
-#' @title Pretty printing for the result of \code{\link{applyChanges}}.
-#' @param x [list.applyChanges] The output of \code{\link{applyChanges}}.
-#' @param ... Unused; only for consistency with \code{\link{print}}.
-#' @details The output of \code{\link{applyChanges}} is a list, potentially a very long one, and difficult to read. To make it easier to digest, this function only prints the \code{$end} element, i.e. the final shapes produced by the application of all of the sound changes.
-#' @return [list.applyChanges] The same object that was given as \code{x}.
-#' @seealso \code{\link{applyChanges}}, \code{\link{print.tree.applyChanges}}
-#' @export
-#' @examples
-#' # prepare sample transcription
-#' trans <- loadSampleDataset ("trans-common")
-#' # define sound changes
-#' a2b <- soundchange ("a > b", "change 1", trans)
-#' b2c <- soundchange ("b > c", "change 2", trans)
-#' # and apply them
-#' applyChanges (c("a","b","c"), list(a2b,b2c))
-
-print.list.applyChanges <- function (x, ...) {
-
-	# do the printing
-	print (x$end)
-
-	# return the object, invisibly
-	invisible (x)
-
-}
-
-# -------------------------------------------------------------------------------------------------- >>> -
-# - exp print.tree.applyChanges -------------------------------------------------------------------- <<< -
-
-#' @title Pretty printing for part of the result of \code{\link{applyChanges}}.
-#' @param x [tree.applyChanges] The \code{tree} element in the output of \code{\link{applyChanges}}.
-#' @param ... Unused; only for consistency with \code{\link{print}}.
-#' @details One of the elements in the output of \code{\link{applyChanges}} is a tree. It is represented as a nested list, potentially a very deeply nested and a very long list which would have been all but impossible to digest for a human. This function prints it as a structure that more resembles a tree, very similar to the output of \code{\link{str}}.
-#' @return [tree.applyChanges] The same object that was given as \code{x}.
-#' @seealso \code{\link{applyChanges}}, \code{\link{print.list.applyChanges}}
-#' @export
-#' @examples
-#' # prepare sample transcription
-#' trans <- loadSampleDataset ("trans-common")
-#' # define sound changes
-#' ab <- soundchange (function(x,meta) c("a","b"), "change 1", trans)
-#' ab2c <- soundchange ("[ab] > c", "change 2", trans)
-#' # and apply them
-#' applyChanges (c("a","b","c"), list(ab,ab2c))$tree
-
-print.tree.applyChanges <- function (x, ...) {
-
-# - hlp - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -<<< -
-
-	hlp <- function (y, lvl)
-
-		# it's a recursive function
-		if (length(y) > 0)
-
-			# print all the branches
-			lapply (y, function (z) {
-
-				# do the printing
-				cat (paste0 (lvl, " "))
-				cat (collapse(rep(".. ",lvl-1), inter=""))
-				cat (z$start)
-				if (!is.null(z$change)) cat(paste0(" [", z$change, "]"))
-				cat ("\n")
-
-				# continue onto the branches
-				hlp (z$end, lvl+1)
-
-			})
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ->>> -
-
-	# do the printing
-	hlp (x, 1)
-	cat ("\n")
-
-	# return the object, invisibly
-	invisible (x)
 
 }
 

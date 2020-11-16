@@ -4,8 +4,16 @@
 \alias{findExamples}
 \title{Find all pairs/triples/... with corresponding sequences of sounds.}
 \usage{
-findExamples(data, ..., distance.start, distance.end, na.value, zeros,
-  cols)
+findExamples(
+  data,
+  ...,
+  distance.start,
+  distance.end,
+  na.value,
+  zeros,
+  cols,
+  perl
+)
 }
 \arguments{
 \item{data}{[soundcorrs] The dataset in which to look.}
@@ -16,11 +24,13 @@ findExamples(data, ..., distance.start, distance.end, na.value, zeros,
 
 \item{distance.end}{[integer] The allowed distance between segments where the sound sequences end. A negative value means alignment of the end of sequences will not be checked. Defaults to -1.}
 
-\item{na.value}{[numeric] Treat \code{NA}'s as matches (\code{0}) or non-matches (\code{-1})? Defaults to \code{0}.}
+\item{na.value}{[numeric] Treat \code{NA}'s as matches (\code{0}) or non-matches (\code{-1})? Note that an empty string query takes precedence over \code{na.value}, that is even whan \code{na.value} is set to \code{-1}, \code{NA}'s will show up in the results when the query is an empty string. Defaults to \code{0}.}
 
 \item{zeros}{[logical] Take linguistic zeros into account? Defaults to \code{FALSE}.}
 
 \item{cols}{[character vector] Which columns of the dataset to return as the result. Can be a vector of names, \code{"aligned"} (the two columns with segmented, aligned words), or \code{"all"} (all columns). Defaults to \code{"aligned"}.}
+
+\item{perl}{[logical] Use Perl-compatible regular expressions? Defaults to \code{FALSE}.}
 }
 \value{
 [df.findExamples] A list with two fields: \code{$data}, a data frame with found examples; and \code{$which}, a logical vector showing which rows of \code{data} are considered matches.
@@ -42,15 +52,17 @@ dataset <- loadSampleDataset ("data-capitals")
 # find examples which have "a" in all three languages
 findExamples (dataset, "a", "a", "a")
 # find examples where German has schwa, and Polish and Spanish have a Vr sequence
-findExamples (dataset, "\\u0259", "Vr", "Vr")
+findExamples (dataset, "\u0259", "Vr", "Vr")
+# as above, but the schwa and the two vowels must be in the same segment
+findExamples (dataset, "\u0259", "V(?=r)", "V(?=r)", distance.start=0, distance.end=0, perl=TRUE)
 # find examples where German has a-umlaut, Polish has a or e, and Spanish has any sound at all
-findExamples (dataset, "\\u00E4", "[ae]", "")
+findExamples (dataset, "\u00E4", "[ae]", "")
 # find examples where German has a linguistic zero while Polish and Spanish do not
 findExamples (dataset, "-", "[^-]", "[^-]", zeros=TRUE)
 # find examples where German has schwa, and Polish and Spanish have a
-findExamples (dataset, "\\u0259", "a", "a", distance.start=-1, distance.end=-1)
+findExamples (dataset, "\u0259", "a", "a", distance.start=-1, distance.end=-1)
 # as above, but the schwa and the two a's must be in the same segment
-findExamples (dataset, "\\u0259", "a", "a", distance.start=0, distance.end=0)
+findExamples (dataset, "\u0259", "a", "a", distance.start=0, distance.end=0)
 }
 \seealso{
 \code{\link{findPairs}}
